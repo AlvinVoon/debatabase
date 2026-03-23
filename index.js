@@ -31,3 +31,5 @@
       const saved = localStorage.getItem('doc');
       if (saved) editor.innerHTML = saved;
     };
+
+    
