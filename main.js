@@ -20,8 +20,8 @@ async function loadDocuments() {
       const div = document.createElement('div');
       div.className = 'document-item';
       div.innerHTML = `
-        <h3>${docData.content.substring(0, 50) || 'Untitled'}...</h3>
-        <p>${new Date(docData.timestamp.toDate()).toLocaleDateString()}</p>
+        <strong>${docData.motion || 'Untitled'}</strong><br>
+        <small>${new Date(docData.timestamp?.toMillis()).toLocaleString() || 'No timestamp'}</small>
       `;
       div.style.cursor = 'pointer';
       div.onclick = () => {

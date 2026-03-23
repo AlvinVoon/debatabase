@@ -10,6 +10,7 @@ import {
 
 const editor = document.getElementById('editor');
 const status = document.getElementById('status');
+const motion = document.getElementById('motion');
 
 // Get docId from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
@@ -29,6 +30,7 @@ async function saveDoc() {
     if (currentDocId) {
       // Update existing document
       await setDoc(doc(db, "documents", currentDocId), {
+        motion: motion.innerText || 'Untitled',
         content: editor.innerHTML,
         timestamp: new Date()
       });
@@ -36,6 +38,7 @@ async function saveDoc() {
     } else {
       // Create new document
       const docRef = await addDoc(collection(db, "documents"), {
+        motion: motion || 'Untitled',
         content: editor.innerHTML,
         timestamp: new Date()
       });
@@ -64,6 +67,7 @@ editor.addEventListener('input', () => {
 
     if (currentDocId) {
       await setDoc(doc(db, "documents", currentDocId), {
+        motion: motion.innerText || 'Untitled',
         content: editor.innerHTML,
         timestamp: new Date()
       });
@@ -83,6 +87,8 @@ window.onload = async () => {
     unsubscribe = onSnapshot(docRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
+
+        motion.innerText = data.motion || 'Untitled';
 
         // Prevent cursor jump / overwrite while typing
         if (editor.innerHTML !== data.content) {
