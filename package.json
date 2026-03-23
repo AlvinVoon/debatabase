@@ -1,0 +1,25 @@
+{
+  "name": "debatabase",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlvinVoon/debatabase.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/AlvinVoon/debatabase/issues"
+  },
+  "homepage": "https://github.com/AlvinVoon/debatabase#readme",
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "firebase": "^12.11.0"
+  }
+}

@@ -74,3 +74,49 @@ body{
 .cta-button{
     text-decoration: none;
 }
+
+.documents-section {
+    padding: 40px 20px;
+    background-color: var(--background-color);
+}
+
+.documents-section h2 {
+    text-align: center;
+    color: var(--primary-color);
+    font-size: 2em;
+    margin-bottom: 30px;
+}
+
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.document-item {
+    background-color: white;
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.document-item:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.document-item h3 {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+    word-break: break-word;
+}
+
+.document-item p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9em;
+}

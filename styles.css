@@ -58,3 +58,9 @@
     .status.show {
       opacity: 1;
     }
+
+    .title{
+      display:flex;
+      align-items: center;
+      min-width: 180px;
+    }
