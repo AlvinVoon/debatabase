@@ -5,6 +5,16 @@ import {
   query
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+const filterItems = document.querySelectorAll('.filter-item');
+filterItems.forEach(item => {
+  item.addEventListener('click', () => {
+    filterItems.forEach(i => i.classList.remove('active'));
+   item.classList.add('active');
+  });
+});
+
+
+
 async function loadDocuments() {
   try {
     const docsContainer = document.getElementById('documents-container');

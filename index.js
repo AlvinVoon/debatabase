@@ -12,6 +12,9 @@ const editor = document.getElementById('editor');
 const status = document.getElementById('status');
 const motion = document.getElementById('motion');
 
+let motionType = "Politics";
+let timeout = null; // debounce timer for autosave
+
 // Get docId from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 let currentDocId = urlParams.get('docId');
@@ -23,13 +26,16 @@ function format(command) {
   document.execCommand(command, false, null);
 }
 
+// expose for inline toolbar `onclick="format('bold')"` in editor.html
+window.format = format;
+
 async function saveDoc() {
   try {
     showStatus('Saving...');
     
     if (currentDocId) {
       // Update existing document
-      await setDoc(doc(db, "documents", currentDocId), {
+      await setDoc(doc(db, motionType, currentDocId), {
         motion: motion.innerText || 'Untitled',
         content: editor.innerHTML,
         timestamp: new Date()
@@ -37,8 +43,8 @@ async function saveDoc() {
       console.log("Document updated with ID: ", currentDocId);
     } else {
       // Create new document
-      const docRef = await addDoc(collection(db, "documents"), {
-        motion: motion || 'Untitled',
+      const docRef = await addDoc(collection(db, motionType), {
+        motion: motion.innerText || 'Untitled',
         content: editor.innerHTML,
         timestamp: new Date()
       });
@@ -59,14 +65,15 @@ function showStatus(text) {
   setTimeout(() => status.classList.remove('show'), 1500);
 }
 
-editor.addEventListener('input', () => {
+function scheduleAutosave() {
   clearTimeout(timeout);
 
   timeout = setTimeout(async () => {
     localStorage.setItem('doc', editor.innerHTML);
+    localStorage.setItem('motion', motion.innerText);
 
     if (currentDocId) {
-      await setDoc(doc(db, "documents", currentDocId), {
+      await setDoc(doc(db, motionType, currentDocId), {
         motion: motion.innerText || 'Untitled',
         content: editor.innerHTML,
         timestamp: new Date()
@@ -75,13 +82,16 @@ editor.addEventListener('input', () => {
 
     showStatus('Auto-saved & synced');
   }, 1000);
-});
+}
+
+editor.addEventListener('input', scheduleAutosave);
+motion.addEventListener('input', scheduleAutosave);
 
 let unsubscribe;
 
 window.onload = async () => {
   if (currentDocId) {
-    const docRef = doc(db, "documents", currentDocId);
+    const docRef = doc(db, motionType, currentDocId);
 
     // 🔥 REAL-TIME LISTENER
     unsubscribe = onSnapshot(docRef, (snapshot) => {
