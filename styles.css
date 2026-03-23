@@ -1,0 +1,60 @@
+ body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f3f4;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      background: white;
+      border-bottom: 1px solid #ddd;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .toolbar button {
+      padding: 6px 10px;
+      border: none;
+      background: #eee;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .toolbar button:hover {
+      background: #ddd;
+    }
+
+    .editor-container {
+      display: flex;
+      justify-content: center;
+      padding: 30px;
+    }
+
+    .editor {
+      width: clamp(300px, 800px, 100%);
+      min-height: 1000px;
+      background: white;
+      padding: 40px;
+      outline: none;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .status {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: black;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 5px;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .status.show {
+      opacity: 1;
+    }
