@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Debatabase</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="signUp.css">
+</head>
+<body>
+    <header class="header">
+        <h1 class="debatabase">Debatabase</h1>
+    </header>
+    <div class="signup-container">
+        <h2>Join Debatabase</h2>
+        <div class="user-avatar"></div>
+        <form id="signup-form">
+            <div class="form-group">
+                <label for="full-name">Full Name</label>
+                <input type="text" id="full-name" name="full-name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm-password">Confirm Password</label>
+                <input type="password" id="confirm-password" name="confirm-password" required>
+            </div>
+            <button type="submit" class="signup-button">Sign Up</button>
+        </form>
+        <div class="divider">
+            <span>or</span>
+        </div>
+        <button id="google-signup" class="google-button">
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google logo" class="google-logo">
+            Sign up with Google
+        </button>
+        <div class="login-link">
+            <p>Already have an account? Sign in below.</p>
+        </div>
+
+        <div class="signin-container">
+            <h2>Sign In</h2>
+            <form id="signin-form">
+                <div class="form-group">
+                    <label for="signin-email">Email</label>
+                    <input type="email" id="signin-email" name="signin-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="signin-password">Password</label>
+                    <input type="password" id="signin-password" name="signin-password" required>
+                </div>
+                <button type="submit" class="signup-button">Sign In</button>
+            </form>
+        </div>
+    </div>
+    <script type="module" src="signUp.js"></script>
+    <script type="module" src="avataaars.js"></script>
+</body>
+</html>
