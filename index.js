@@ -1,6 +1,6 @@
 import { db } from './firebase.js';
-import { 
-  collection, 
+import {
+  collection,
   addDoc,
   setDoc,
   doc,
@@ -32,7 +32,11 @@ function format(command) {
 
 
 const checkPermissions = async () => {
-  if (localStorage.getItem('user').uid == getDoc(doc(db, motionTypeEl.innerText || 'General', currentDocId)).owner) {
+
+  const snapshot = await getDoc(doc(db, motionTypeEl.innerText, currentDocId));
+
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (snapshot.exists() && user.uid === snapshot.data().uid) {
     editorPermission = true;
   } else {
     editorPermission = false;
@@ -50,7 +54,7 @@ window.format = format;
 async function saveDoc() {
   try {
     showStatus('Saving...');
-    
+
     if (currentDocId) {
       // Update existing document
       await setDoc(doc(db, motionTypeEl.innerText || 'General', currentDocId), {
@@ -60,7 +64,7 @@ async function saveDoc() {
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
       });
-        await setDoc(doc(db, 'documents', currentDocId), {
+      await setDoc(doc(db, 'documents', currentDocId), {
         motion: motion.innerText || 'Untitled',
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
@@ -117,7 +121,7 @@ function scheduleAutosave() {
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous'
       });
-        await setDoc(doc(db, 'documents', currentDocId), {
+      await setDoc(doc(db, 'documents', currentDocId), {
         motion: motion.innerText || 'Untitled',
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
