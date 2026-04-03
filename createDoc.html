@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Google Docs API Quickstart</title>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="createDoc.css">
+  <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+  <header class="header">
+    <h1>Debatabase</h1>
+    <div class="user-info"></div>
+  </header>
+
+  <section>
+    <div class="create-new intro">
+      <h1>Create a new document</h1>
+    </div>
+    <div class="create-new scratch">
+      <h2>Create new document</h2>
+      <button class="create-document-btn">Create</button>
+    </div>
+    <div class="create-new link">
+      <h2>Link an existing Google Docs file</h2>
+      <!--Add buttons to initiate auth sequence and sign out-->
+      <button class="create-document-btn" id="authorize_button">Authorize</button>
+      <!--button id="signout_button">Sign Out</button-->
+
+      <!--pre id="content" style="white-space: pre-wrap;"></pre-->
+    </div>
+  </section>
+
+  <script type="module" src="createDoc.js"></script>
+</body>
+
+</html>

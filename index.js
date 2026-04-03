@@ -35,8 +35,11 @@ const checkPermissions = async () => {
 
   const snapshot = await getDoc(doc(db, motionTypeEl.innerText, currentDocId));
 
+
   const user = JSON.parse(localStorage.getItem('user'));
-  if (snapshot.exists() && user.uid === snapshot.data().uid) {
+
+  console.log(user.uid, snapshot.data().owner);
+  if (snapshot.exists() && user.uid === snapshot.data().owner) {
     editorPermission = true;
   } else {
     editorPermission = false;
@@ -141,7 +144,7 @@ motionTypeEl.addEventListener('input', scheduleAutosave);
 let unsubscribe;
 
 window.onload = async () => {
-  checkPermissions();
+  await checkPermissions();
   if (currentDocId) {
     const docRef = doc(db, motionTypeEl.innerText || 'General', currentDocId);
 
