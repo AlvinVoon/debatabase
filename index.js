@@ -32,14 +32,25 @@ function format(command) {
 
 
 const checkPermissions = async () => {
+  if (!currentDocId) {
+    // Creating new document (or no ID provided), editor should be writable
+    editorPermission = true;
+    return;
+  }
 
-  const snapshot = await getDoc(doc(db, motionTypeEl.innerText, currentDocId));
-
-
+  const snapshot = await getDoc(doc(db, motionTypeEl.innerText || 'General', currentDocId));
   const user = JSON.parse(localStorage.getItem('user'));
 
-  console.log(user.uid, snapshot.data().owner);
-  if (snapshot.exists() && user.uid === snapshot.data().owner) {
+  if (!snapshot.exists() || !user) {
+    editorPermission = false;
+    editor.setAttribute('contenteditable', 'false');
+    const toolBar = document.querySelector('.toolbar');
+    if (toolBar) toolBar.style.display = 'none';
+    alert('This document does not exist or you are not signed in.');
+    return;
+  }
+
+  if (user.uid === snapshot.data().owner) {
     editorPermission = true;
   } else {
     editorPermission = false;
@@ -94,6 +105,7 @@ async function saveDoc() {
       });
       currentDocId = docRef.id;
       sessionStorage.setItem('docId', currentDocId);
+      refreshDocInfo();
       console.log("Document written with ID: ", currentDocId);
     }
     showStatus('Saved to Firebase');
@@ -138,8 +150,8 @@ function scheduleAutosave() {
 }
 
 editor.addEventListener('input', scheduleAutosave);
-motion.addEventListener('input', scheduleAutosave);
-motionTypeEl.addEventListener('input', scheduleAutosave);
+motion.addEventListener('input', () => { scheduleAutosave(); refreshDocInfo(); });
+motionTypeEl.addEventListener('input', () => { scheduleAutosave(); refreshDocInfo(); });
 
 let unsubscribe;
 

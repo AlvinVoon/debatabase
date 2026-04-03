@@ -5,10 +5,12 @@
     --background-color: #FFE8C2;
     --extra-color:#F0A868;
 }
+
 body{
     margin:0;
     padding:0;
     font-family:Arial, sans-serif;
+    background-color: var(--background-color);
 }
 
 .header{
@@ -145,4 +147,20 @@ body{
 
 .filter-item.active {
     background-color: var(--extra-color);
+}
+
+.create-btn{
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--primary-color);
+    color: white;
+    width:70px;
+    height:70px;
+    border-radius: 50%;
+    font-size: 2em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
 }

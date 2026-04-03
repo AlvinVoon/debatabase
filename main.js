@@ -11,6 +11,14 @@ const getStarted = document.querySelector('.cta-button');
 
 const userInfoDiv = document.querySelector('.user-info');
 
+const heroSection = document.querySelector('.hero');
+
+const createBtn = document.querySelector('.create-btn');
+
+createBtn.addEventListener('click', () => {
+  window.location.href = 'createDoc.html';
+})
+
 console.log(localStorage);
 const user = JSON.parse(localStorage.getItem('user'));
 if (user) {
@@ -40,6 +48,13 @@ filterItems.forEach(item => {
 
 
 async function loadDocuments() {
+
+  console.log("Dom loaded");
+  if (user != null) {
+    console.log("User is logged in, showing documents.");
+    heroSection.style.display = 'none';
+  }
+
   try {
     const docsContainer = document.getElementById('documents-container');
     if (!docsContainer) return;
@@ -69,5 +84,7 @@ async function loadDocuments() {
   }
 }
 
-window.addEventListener('DOMContentLoaded', loadDocuments);
+window.addEventListener('DOMContentLoaded', () => {
+  loadDocuments();
+});
 
