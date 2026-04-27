@@ -12,16 +12,245 @@ const editor = document.getElementById('editor');
 const status = document.getElementById('status');
 const motion = document.getElementById('motion');
 
+let draggingComment = null;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+let resizingComment = null;
+let resizeStartX = 0;
+let resizeStartY = 0;
+let resizeStartWidth = 0;
+let resizeStartHeight = 0;
+let comment = [];
+
+const addComment = () =>{
+    const commentEl = document.createElement('div');
+  commentEl.classList.add('comments');
+  commentEl.innerHTML =  `
+  <div class="comment-control-panel">
+    <div class="comment-control">###</div>
+    <button class="comment-delete-btn" title="Delete comment">×</button>
+  </div>
+  <div class="comment-content" contenteditable="true">
+  </div>
+  <div class="comment-resize-handle" title="Drag to resize"></div>
+   `;
+  document.body.appendChild(commentEl);
+  makeCommentDraggable(commentEl);
+  makeCommentResizable(commentEl);
+  
+  // Trigger save on content change
+  const contentEl = commentEl.querySelector('.comment-content');
+  contentEl.addEventListener('input', () => updateCommentsInFirebase(getCommentsData()));
+  
+  // Delete button
+  const deleteBtn = commentEl.querySelector('.comment-delete-btn');
+  deleteBtn.addEventListener('click', () => {
+    commentEl.remove();
+    updateCommentsInFirebase(getCommentsData());
+  });
+  
+  updateCommentsInFirebase(getCommentsData());
+}
+
+function getCommentsData() {
+  const commentElements = document.querySelectorAll('.comments');
+  const commentsData = [];
+  
+  commentElements.forEach((el) => {
+    const content = el.querySelector('.comment-content').innerText;
+    const x = parseInt(el.style.left) || 20;
+    const y = parseInt(el.style.top) || 200;
+    const width = parseInt(el.style.width) || 150;
+    const height = parseInt(el.style.height) || 150;
+    
+    commentsData.push({
+      x,
+      y,
+      width,
+      height,
+      content
+    });
+  });
+  
+  return commentsData;
+}
+
+function renderCommentsFromData(commentsData) {
+  // Clear existing comments
+  const existingComments = document.querySelectorAll('.comments');
+  existingComments.forEach(el => el.remove());
+  
+  // Render each comment from data
+  commentsData.forEach((commentData) => {
+    const commentEl = document.createElement('div');
+    commentEl.classList.add('comments');
+    commentEl.style.left = `${commentData.x}px`;
+    commentEl.style.top = `${commentData.y}px`;
+    commentEl.style.width = `${commentData.width}px`;
+    commentEl.style.height = `${commentData.height}px`;
+    
+    commentEl.innerHTML =  `
+    <div class="comment-control-panel">
+      <div class="comment-control">###</div>
+      <button class="comment-delete-btn" title="Delete comment">×</button>
+    </div>
+    <div class="comment-content" contenteditable="true">
+    ${commentData.content || ''}
+    </div>
+    <div class="comment-resize-handle" title="Drag to resize"></div>
+     `;
+    
+    document.body.appendChild(commentEl);
+    makeCommentDraggable(commentEl);
+    makeCommentResizable(commentEl);
+    
+    const contentEl = commentEl.querySelector('.comment-content');
+    contentEl.addEventListener('input', () => updateCommentsInFirebase(getCommentsData()));
+    
+    const deleteBtn = commentEl.querySelector('.comment-delete-btn');
+    deleteBtn.addEventListener('click', () => {
+      commentEl.remove();
+      updateCommentsInFirebase(getCommentsData());
+    });
+  });
+}
+
+const addCommentBtn = document.querySelector('.add-comment-btn');
+addCommentBtn.addEventListener('click', addComment);
+
 const motionTypeEl = document.getElementById('motionType');
 
 console.log(motionTypeEl.innerText);
 
+const makeCommentDraggable = (comment) => {
+  const control = comment.querySelector('.comment-control');
+  if (!control) return;
+
+  control.style.cursor = 'grab';
+  control.style.touchAction = 'none';
+
+  control.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    draggingComment = comment;
+    const rect = comment.getBoundingClientRect();
+    dragOffsetX = event.clientX - rect.left;
+    dragOffsetY = event.clientY - rect.top;
+    comment.classList.add('dragging');
+    control.setPointerCapture(event.pointerId);
+
+     updateCommentsInFirebase(getCommentsData())
+  });
+
+  control.addEventListener('pointerup', () => {
+    if (draggingComment === comment) {
+      stopDragging();
+    }
+  });
+
+  control.addEventListener('lostpointercapture', () => {
+    if (draggingComment === comment) {
+      stopDragging();
+    }
+  });
+}
+
+const stopDragging = () => {
+  if (!draggingComment) return;
+  draggingComment.classList.remove('dragging');
+  draggingComment = null;
+}
+
+const makeCommentResizable = (comment) => {
+  const handle = comment.querySelector('.comment-resize-handle');
+  if (!handle) return;
+
+  handle.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    resizingComment = comment;
+    const rect = comment.getBoundingClientRect();
+    resizeStartX = event.clientX;
+    resizeStartY = event.clientY;
+    resizeStartWidth = rect.width;
+    resizeStartHeight = rect.height;
+    handle.setPointerCapture(event.pointerId);
+
+    
+   updateCommentsInFirebase(getCommentsData());
+  });
+
+  handle.addEventListener('pointerup', () => {
+    if (resizingComment === comment) {
+      stopResizing();
+    }
+  });
+
+  handle.addEventListener('lostpointercapture', () => {
+    if (resizingComment === comment) {
+      stopResizing();
+    }
+  });
+
+}
+
+function stopResizing() {
+  if (!resizingComment) return;
+  resizingComment = null;
+}
+
+document.addEventListener('pointermove', (event) => {
+  if (draggingComment) {
+    event.preventDefault();
+    const newLeft = event.clientX - dragOffsetX;
+    const newTop = event.clientY - dragOffsetY;
+    draggingComment.style.left = `${Math.max(0, newLeft)}px`;
+    draggingComment.style.top = `${Math.max(0, newTop)}px`;
+    return;
+  }
+
+  if (!resizingComment) return;
+  event.preventDefault();
+
+  const deltaX = event.clientX - resizeStartX;
+  const deltaY = event.clientY - resizeStartY;
+  const minWidth = 100;
+  const minHeight = 80;
+
+  resizingComment.style.width = `${Math.max(minWidth, resizeStartWidth + deltaX)}px`;
+  resizingComment.style.height = `${Math.max(minHeight, resizeStartHeight + deltaY)}px`;
+});
+
+document.addEventListener('pointerup', () => {
+  if (draggingComment) {
+    stopDragging();
+    updateCommentsInFirebase(getCommentsData());
+  }
+  if (resizingComment) {
+    stopResizing();
+    updateCommentsInFirebase(getCommentsData());
+  }
+});
+
 let editorPermission = false; // default to read-only until we verify permissions
 let timeout = null; // debounce timer for autosave
 
-// Get docId from URL parameters
-const urlParams = new URLSearchParams(window.location.search);
-let currentDocId = urlParams.get('docId');
+let currentDocId;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+
+  console.log(window.location.search);     // DEBUG
+  console.log([...params.entries()]);      // DEBUG
+
+  const docId = [...params.entries()][0][1];
+
+  currentDocId = docId;
+  
+  console.log(docId);
+});
+
+
+
 
 const saveBtn = document.querySelector('.save-btn');
 saveBtn.addEventListener('click', saveDoc);
@@ -64,6 +293,22 @@ const checkPermissions = async () => {
 // expose for inline toolbar `onclick="format('bold')"` in editor.html
 window.format = format;
 
+async function updateCommentsInFirebase(commentsData) {
+  if (!currentDocId) return;
+  
+  try {
+    await setDoc(doc(db, motionTypeEl.innerText || 'General', currentDocId), {
+      motion: motion.innerText || 'Untitled',
+      content: editor.innerHTML,
+      timestamp: new Date(),
+      author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
+      owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
+      comments: commentsData
+    }, { merge: true });
+  } catch (e) {
+    console.error('Error updating comments:', e);
+  }
+}
 
 async function saveDoc() {
   try {
@@ -71,12 +316,14 @@ async function saveDoc() {
 
     if (currentDocId) {
       // Update existing document
+      const commentsData = getCommentsData();
       await setDoc(doc(db, motionTypeEl.innerText || 'General', currentDocId), {
         motion: motion.innerText || 'Untitled',
         content: editor.innerHTML,
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
+        comments: commentsData,
       });
       await setDoc(doc(db, 'documents', currentDocId), {
         motion: motion.innerText || 'Untitled',
@@ -89,12 +336,14 @@ async function saveDoc() {
       console.log("Document updated with ID: ", currentDocId);
     } else {
       // Create new document
+      const commentsData = getCommentsData();
       const docRef = await addDoc(collection(db, motionTypeEl.innerText || 'General'), {
         motion: motion.innerText || 'Untitled',
         content: editor.innerHTML,
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
+        comments: commentsData,
       });
       await addDoc(collection(db, 'documents'), {
         motion: motion.innerText || 'Untitled',
@@ -129,12 +378,14 @@ function scheduleAutosave() {
     localStorage.setItem('motion', motion.innerText);
 
     if (currentDocId) {
+      const commentsData = getCommentsData();
       await setDoc(doc(db, motionTypeEl.innerText || 'General', currentDocId), {
         motion: motion.innerText || 'Untitled',
         content: editor.innerHTML,
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
-        owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous'
+        owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
+        comments: commentsData
       });
       await setDoc(doc(db, 'documents', currentDocId), {
         motion: motion.innerText || 'Untitled',
@@ -165,6 +416,16 @@ window.onload = async () => {
       if (snapshot.exists()) {
         const data = snapshot.data();
 
+        comment = data.comments || [];
+
+        console.log(comment);
+        
+        // Render comments if they differ from current DOM state
+        const currentCommentsData = getCommentsData();
+        if (JSON.stringify(currentCommentsData) !== JSON.stringify(comment)) {
+          renderCommentsFromData(comment);
+        }
+
         motion.innerText = data.motion || 'Untitled';
 
         // Prevent cursor jump / overwrite while typing
@@ -180,3 +441,9 @@ window.onload = async () => {
     if (saved) editor.innerHTML = saved;
   }
 };
+
+const debatabaseTitle = document.querySelector('.debatabase');
+
+debatabaseTitle.addEventListener('click', () => {
+  window.location.href = 'index.html';
+});

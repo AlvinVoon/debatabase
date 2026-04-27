@@ -16,7 +16,7 @@ await loadScript("https://apis.google.com/js/api.js");
 await loadScript("https://accounts.google.com/gsi/client");
 
 
-const createBtn = document.querySelector('.create-document-btn'); 
+const createBtn = document.querySelector('.create-document-btn');
 
 
 
@@ -41,61 +41,54 @@ createBtn.addEventListener('click', () => {
       <button class="create-document-btn" id="main-create">Create</button>
     </div>
         `
-      document.body.appendChild(configScreen);
+  document.body.appendChild(configScreen);
 
-      const createBtn = document.getElementById('main-create');
+  const createBtn = document.getElementById('main-create');
 
-      createBtn.addEventListener('click', async () => {
-        const title = document.getElementById('doc-title').value.trim() || 'Untitled';
-        const motionType = document.getElementById('doc-motion').value.trim() || 'General';
-        const visibility = document.querySelector('.switch input').checked;
+  createBtn.addEventListener('click', async () => {
+    const title = document.getElementById('doc-title').value.trim() || 'Untitled';
+    const motionType = document.getElementById('doc-motion').value.trim() || 'General';
+    const visibility = document.querySelector('.switch input').checked;
 
-        console.log('Create clicked:', { title, motionType, visibility });
+    console.log('Create clicked:', { title, motionType, visibility });
 
-        const user = JSON.parse(localStorage.getItem('user')) || {};
-        const author = user.displayName || 'anonymous';
-        const owner = user.uid || 'anonymous';
+    const user = JSON.parse(localStorage.getItem('user')) || {};
+    const author = user.displayName || 'anonymous';
+    const owner = user.uid || 'anonymous';
 
-        try {
-          const collectionName = motionType || 'General';
+    try {
+      const collectionName = motionType || 'General';
 
-          // Create the new document in the chosen category
-          const docRef = await addDoc(collection(db, collectionName), {
-            motion: title,
-            motionType: motionType,
-            visibility: visibility ? 'public' : 'private',
-            content: '',
-            timestamp: new Date(),
-            author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
-            owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
-          });
-
-          if (visibility == true) {
-          // Add or update the documents index collection for browsing
-          await setDoc(doc(db, 'documents', docRef.id), {
-            motion: title,
-            motionType: motionType,
-            visibility: visibility ? 'public' : 'private',
-            timestamp: new Date(),
-            author,
-            owner,
-          });
-
-        }
-
-          const params = new URLSearchParams({
-            docId: docRef.id,
-            motion: title,
-            motionType: motionType,
-            visibility: visibility ? 'public' : 'private'
-          });
-
-          window.location.href = `editor.html?$docid=${docRef.id}`;
-        } catch (err) {
-          console.error('Failed to create document', err);
-          alert('Could not create document. Check console for details.');
-        }
+      // Create the new document in the chosen category
+      const docRef = await addDoc(collection(db, collectionName), {
+        motion: title,
+        motionType: motionType,
+        visibility: visibility ? 'public' : 'private',
+        content: '',
+        timestamp: new Date(),
+        author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
+        owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
       });
+
+      if (visibility == true) {
+        // Add or update the documents index collection for browsing
+        await setDoc(doc(db, 'documents', docRef.id), {
+          motion: title,
+          motionType: motionType,
+          visibility: visibility ? 'public' : 'private',
+          timestamp: new Date(),
+          author,
+          owner,
+        });
+
+      }
+      
+      window.location.href = `editor.html?docId=${docRef.id}`;
+    } catch (err) {
+      console.error('Failed to create document', err);
+      alert('Could not create document. Check console for details.');
+    }
+  });
 })
 
 
@@ -103,7 +96,7 @@ createBtn.addEventListener('click', () => {
 const debatabaseTitle = document.querySelector('.debatabase');
 
 debatabaseTitle.addEventListener('click', () => {
-    window.location.href = 'index.html';
+  window.location.href = 'index.html';
 });
 
 // =====================

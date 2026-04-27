@@ -2,7 +2,8 @@ import { db } from './firebase.js';
 import { 
   collection, 
   getDocs,
-  query
+  query,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const filterItems = document.querySelectorAll('.filter-item');
@@ -59,7 +60,7 @@ async function loadDocuments() {
     const docsContainer = document.getElementById('documents-container');
     if (!docsContainer) return;
     
-    const q = query(collection(db, selectedFilter || 'documents'));
+    const q = query(collection(db, selectedFilter || 'documents'), orderBy('timestamp', 'desc'));
     const querySnapshot = await getDocs(q);
     
     docsContainer.innerHTML = '';
