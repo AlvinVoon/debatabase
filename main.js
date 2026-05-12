@@ -28,6 +28,41 @@ if (user) {
   `;
 }
 
+userInfoDiv.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const dropDown = document.querySelector('.dropdown');
+  if (dropDown.style.display === 'block') {
+    dropDown.style.display = 'none';
+  } else {
+    dropDown.style.display = 'block';
+  }
+});
+
+document.addEventListener('click', (e) => {
+  const dropDown = document.querySelector('.dropdown');
+  if (dropDown && dropDown.style.display === 'block' && !userInfoDiv.contains(e.target)) {
+    dropDown.style.display = 'none';
+  }
+});
+
+const profileOption = document.querySelector('#profile');
+const logoutOption = document.querySelector('#logout');
+
+[profileOption, logoutOption].forEach(option => {
+  option.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+});
+
+logoutOption.addEventListener('click', () => {
+  localStorage.removeItem('user');
+  window.location.reload();
+})
+
+profileOption.addEventListener('click', () => {
+  window.location.href='profile.html';
+})
+
 getStarted.addEventListener('click', () => {
   window.location.href = 'signUp.html';
 });
@@ -76,7 +111,7 @@ async function loadDocuments() {
       `;
       div.style.cursor = 'pointer';
       div.onclick = () => {
-        window.location.href = `editor.html?docId=${docSnapshot.id}`;
+        window.location.href = `editor.html?docId=${docSnapshot.id}&motionType=${encodeURIComponent(docData.motionType || 'General')}`;
       };
       docsContainer.appendChild(div);
     });

@@ -235,6 +235,7 @@ let editorPermission = false; // default to read-only until we verify permission
 let timeout = null; // debounce timer for autosave
 
 let currentDocId;
+let currentMotionType;
 
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
@@ -242,9 +243,16 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log(window.location.search);     // DEBUG
   console.log([...params.entries()]);      // DEBUG
 
-  const docId = [...params.entries()][0][1];
+  const docId = params.get('docId');
+  const motionTypeFromUrl = params.get('motionType');
 
   currentDocId = docId;
+  currentMotionType = motionTypeFromUrl || 'General';
+  
+  // Store motionType from URL to be used later
+  if (motionTypeFromUrl) {
+    window.pendingMotionType = motionTypeFromUrl;
+  }
   
   console.log(docId);
 });
@@ -267,8 +275,12 @@ const checkPermissions = async () => {
     return;
   }
 
-  const snapshot = await getDoc(doc(db, motionTypeEl.innerText || 'General', currentDocId));
+  console.log(currentMotionType);
+
+  const snapshot = await getDoc(doc(db, currentMotionType, currentDocId));
   const user = JSON.parse(localStorage.getItem('user'));
+
+  console.log('Checking permissions for doc:', snapshot.data(), 'User:', user);
 
   if (!snapshot.exists() || !user) {
     editorPermission = false;
@@ -297,7 +309,7 @@ async function updateCommentsInFirebase(commentsData) {
   if (!currentDocId) return;
   
   try {
-    await setDoc(doc(db, motionTypeEl.innerText || 'General', currentDocId), {
+    await setDoc(doc(db, currentMotionType, currentDocId), {
       motion: motion.innerText || 'Untitled',
       content: editor.innerHTML,
       timestamp: new Date(),
@@ -317,7 +329,7 @@ async function saveDoc() {
     if (currentDocId) {
       // Update existing document
       const commentsData = getCommentsData();
-      await setDoc(doc(db, motionTypeEl.innerText || 'General', currentDocId), {
+      await setDoc(doc(db, currentMotionType, currentDocId), {
         motion: motion.innerText || 'Untitled',
         content: editor.innerHTML,
         timestamp: new Date(),
@@ -330,14 +342,14 @@ async function saveDoc() {
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
-        motionType: motionTypeEl.innerText || 'General'
+        motionType: currentMotionType
       });
 
       console.log("Document updated with ID: ", currentDocId);
     } else {
       // Create new document
       const commentsData = getCommentsData();
-      const docRef = await addDoc(collection(db, motionTypeEl.innerText || 'General'), {
+      const docRef = await addDoc(collection(db, currentMotionType), {
         motion: motion.innerText || 'Untitled',
         content: editor.innerHTML,
         timestamp: new Date(),
@@ -350,7 +362,7 @@ async function saveDoc() {
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
-        motionType: motionTypeEl.innerText || 'General'
+        motionType: currentMotionType
       });
       currentDocId = docRef.id;
       sessionStorage.setItem('docId', currentDocId);
@@ -379,7 +391,7 @@ function scheduleAutosave() {
 
     if (currentDocId) {
       const commentsData = getCommentsData();
-      await setDoc(doc(db, motionTypeEl.innerText || 'General', currentDocId), {
+      await setDoc(doc(db, currentMotionType, currentDocId), {
         motion: motion.innerText || 'Untitled',
         content: editor.innerHTML,
         timestamp: new Date(),
@@ -392,7 +404,7 @@ function scheduleAutosave() {
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
-        motionType: motionTypeEl.innerText || 'General'
+        motionType: currentMotionType
       });
     }
 
@@ -407,9 +419,18 @@ motionTypeEl.addEventListener('input', () => { scheduleAutosave(); refreshDocInf
 let unsubscribe;
 
 window.onload = async () => {
+  // Apply motionType from URL if it was passed
+  if (window.pendingMotionType) {
+    const motionTypeEl = document.getElementById('motionType');
+    if (motionTypeEl) {
+      motionTypeEl.innerText = window.pendingMotionType;
+    }
+    delete window.pendingMotionType;
+  }
+  
   await checkPermissions();
   if (currentDocId) {
-    const docRef = doc(db, motionTypeEl.innerText || 'General', currentDocId);
+    const docRef = doc(db, currentMotionType, currentDocId);
 
     // 🔥 REAL-TIME LISTENER
     unsubscribe = onSnapshot(docRef, (snapshot) => {

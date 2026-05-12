@@ -1,5 +1,6 @@
-import { auth } from './firebase.js';
+import { db, auth } from './firebase.js';
 import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { collection, addDoc, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {avataaars} from './avataaars.js'
 
 const provider = new GoogleAuthProvider();
@@ -45,6 +46,14 @@ document.getElementById('signup-form').addEventListener('submit', async (e) => {
             displayName: fullName
         });
 
+        // Store user data in Firestore
+        await setDoc(doc(db, 'users', user.uid), {
+            displayName: fullName,
+            email: email,
+            casesCreated: 0,
+            casesEdited: 0
+        });
+
         alert('Account created successfully! You can now log in.');
         // Redirect to login page or main page
         window.location.href = 'index.html';
@@ -67,6 +76,14 @@ if (signInForm) {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             console.log(user);
+            
+            // Store user in localStorage
+            localStorage.setItem('user', JSON.stringify({
+                displayName: user.displayName,
+                email: user.email,
+                uid: user.uid
+            }));
+            
             alert('Signed in successfully!');
 
             window.location.href = 'index.html';
@@ -89,6 +106,15 @@ document.getElementById('google-signup').addEventListener('click', async () => {
             email: user.email,
             uid: user.uid
         }));
+
+        await setDoc(doc(db, 'users', user.uid), {
+            displayName: user.displayName,
+            email: user.email,
+            uid: user.uid,
+            casesCreated: 0,
+            casesEdited: 0
+        }, { merge: true });
+
         alert('Signed in with Google successfully!');
         // Redirect to main page
         window.location.href = 'index.html';

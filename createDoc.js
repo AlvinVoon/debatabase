@@ -1,7 +1,7 @@
 // =====================
 // LOAD FIREBASE + GOOGLE SCRIPTS
 import { db } from './firebase.js';
-import { collection, addDoc, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { collection, addDoc, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // =====================
 const loadScript = (src) =>
@@ -47,7 +47,9 @@ createBtn.addEventListener('click', () => {
 
   createBtn.addEventListener('click', async () => {
     const title = document.getElementById('doc-title').value.trim() || 'Untitled';
-    const motionType = document.getElementById('doc-motion').value.trim() || 'General';
+    const motionTypeInput = document.getElementById('doc-motion').value.trim() || 'General';
+    // Capitalize first letter to match collection names
+    const motionType = motionTypeInput.charAt(0).toUpperCase() + motionTypeInput.slice(1);
     const visibility = document.querySelector('.switch input').checked;
 
     console.log('Create clicked:', { title, motionType, visibility });
@@ -57,7 +59,7 @@ createBtn.addEventListener('click', () => {
     const owner = user.uid || 'anonymous';
 
     try {
-      const collectionName = motionType || 'General';
+      const collectionName = motionType;
 
       // Create the new document in the chosen category
       const docRef = await addDoc(collection(db, collectionName), {
@@ -70,7 +72,7 @@ createBtn.addEventListener('click', () => {
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
       });
 
-      if (visibility == true) {
+      if (visibility === true) {
         // Add or update the documents index collection for browsing
         await setDoc(doc(db, 'documents', docRef.id), {
           motion: title,
@@ -83,7 +85,19 @@ createBtn.addEventListener('click', () => {
 
       }
       
-      window.location.href = `editor.html?docId=${docRef.id}`;
+      // Get current user data to increment casesCreated properly
+      const userDocRef = doc(db, 'users', owner);
+      const userDoc = await getDoc(userDocRef);
+      const currentCasesCreated = userDoc.exists() ? (userDoc.data().casesCreated || 0) : 0;
+      
+      await setDoc(doc(db, 'users', owner), {
+        displayName: author,
+        email: user.email || '',
+        uid: owner,
+        casesCreated: currentCasesCreated + 1,
+      }, { merge: true
+      })
+      window.location.href = `editor.html?docId=${docRef.id}&motionType=${encodeURIComponent(motionType)}`;
     } catch (err) {
       console.error('Failed to create document', err);
       alert('Could not create document. Check console for details.');
