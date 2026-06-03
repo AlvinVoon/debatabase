@@ -1,7 +1,7 @@
 import { db, auth } from './firebase.js';
 import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { collection, addDoc, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import {avataaars} from './avataaars.js'
+import { avataaars } from './avataaars.js'
 
 const provider = new GoogleAuthProvider();
 
@@ -12,11 +12,11 @@ debatabaseTitle.addEventListener('click', () => {
 
 const userAvatarDiv = document.querySelector('.user-avatar');
 window.onload = () => {
-    var svg= avataaars.create({
+    var svg = avataaars.create({
         height: '100',
         width: '100',
-        eyes:"wink",
-        mouth:"twinkle",
+        eyes: "wink",
+        mouth: "twinkle",
     });
 
     userAvatarDiv.innerHTML = svg;
@@ -76,14 +76,14 @@ if (signInForm) {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
             console.log(user);
-            
+
             // Store user in localStorage
             localStorage.setItem('user', JSON.stringify({
                 displayName: user.displayName,
                 email: user.email,
                 uid: user.uid
             }));
-            
+
             alert('Signed in successfully!');
 
             window.location.href = 'index.html';
@@ -107,13 +107,15 @@ document.getElementById('google-signup').addEventListener('click', async () => {
             uid: user.uid
         }));
 
-        await setDoc(doc(db, 'users', user.uid), {
-            displayName: user.displayName,
-            email: user.email,
-            uid: user.uid,
-            casesCreated: 0,
-            casesEdited: 0
-        }, { merge: true });
+        if (result._tokenResponse.isNewUser) {
+            await setDoc(doc(db, 'users', user.uid), {
+                displayName: user.displayName,
+                email: user.email,
+                uid: user.uid,
+                casesCreated: 0,
+                casesEdited: 0
+            }, { merge: true });
+        }
 
         alert('Signed in with Google successfully!');
         // Redirect to main page

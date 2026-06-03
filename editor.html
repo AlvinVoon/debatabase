@@ -19,18 +19,24 @@
     <button onclick="format('underline')"><u>U</u></button>
     <button onclick="format('insertUnorderedList')">• List</button>
     <button onclick="format('insertOrderedList')">1. List</button>
-    <button class="save-btn">💾 Save</button>
-    <button class="add-comment-btn">💬 Add Comment</button>
+    <button class="save-btn"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+    <button class="add-comment-btn"><i class="fa-regular fa-comment"></i> Add Comment</button>
+    <button class="linkable-btn"><i class="fa-solid fa-link"></i> Linkable</button>
+    <button class="showlinkable-btn"><i class="fa-solid fa-eye"></i> Show Linkable</button>
   </div>
 
   <div class="editor-container">
     <div id="editor" class="editor" contenteditable="true">
       Start typing your document here...
     </div>
+    <div class="linkable-display">
+    <i class="fa-solid fa-xmark"></i>
+    </div>
   </div>
 
   <div id="status" class="status">Saved</div>
 
   <script type="module"src="index.js"></script>
+  <script src="https://kit.fontawesome.com/87e6eea42a.js" crossorigin="anonymous"></script>
 </body>
 </html>

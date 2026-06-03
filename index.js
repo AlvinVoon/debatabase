@@ -5,12 +5,24 @@ import {
   setDoc,
   doc,
   getDoc,
+  getDocs,
+  arrayUnion,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const editor = document.getElementById('editor');
 const status = document.getElementById('status');
 const motion = document.getElementById('motion');
+
+const xMark = document.querySelector('.fa-xmark');
+
+const linkableBtn = document.querySelector('.linkable-btn');
+
+const linkableDisplay = document.querySelector('.linkable-display');
+
+const showLinkableBtn = document.querySelector('.showlinkable-btn');
+
+const user = JSON.parse(localStorage.getItem('user'));
 
 let draggingComment = null;
 let dragOffsetX = 0;
@@ -22,10 +34,15 @@ let resizeStartWidth = 0;
 let resizeStartHeight = 0;
 let comment = [];
 
-const addComment = () =>{
-    const commentEl = document.createElement('div');
+showLinkableBtn.addEventListener('click', () => {
+  showLinkable();
+  linkableDisplay.style.display = 'block';
+})
+
+const addComment = () => {
+  const commentEl = document.createElement('div');
   commentEl.classList.add('comments');
-  commentEl.innerHTML =  `
+  commentEl.innerHTML = `
   <div class="comment-control-panel">
     <div class="comment-control">###</div>
     <button class="comment-delete-btn" title="Delete comment">×</button>
@@ -37,32 +54,32 @@ const addComment = () =>{
   document.body.appendChild(commentEl);
   makeCommentDraggable(commentEl);
   makeCommentResizable(commentEl);
-  
+
   // Trigger save on content change
   const contentEl = commentEl.querySelector('.comment-content');
   contentEl.addEventListener('input', () => updateCommentsInFirebase(getCommentsData()));
-  
+
   // Delete button
   const deleteBtn = commentEl.querySelector('.comment-delete-btn');
   deleteBtn.addEventListener('click', () => {
     commentEl.remove();
     updateCommentsInFirebase(getCommentsData());
   });
-  
+
   updateCommentsInFirebase(getCommentsData());
 }
 
 function getCommentsData() {
   const commentElements = document.querySelectorAll('.comments');
   const commentsData = [];
-  
+
   commentElements.forEach((el) => {
     const content = el.querySelector('.comment-content').innerText;
     const x = parseInt(el.style.left) || 20;
     const y = parseInt(el.style.top) || 200;
     const width = parseInt(el.style.width) || 150;
     const height = parseInt(el.style.height) || 150;
-    
+
     commentsData.push({
       x,
       y,
@@ -71,7 +88,7 @@ function getCommentsData() {
       content
     });
   });
-  
+
   return commentsData;
 }
 
@@ -79,7 +96,7 @@ function renderCommentsFromData(commentsData) {
   // Clear existing comments
   const existingComments = document.querySelectorAll('.comments');
   existingComments.forEach(el => el.remove());
-  
+
   // Render each comment from data
   commentsData.forEach((commentData) => {
     const commentEl = document.createElement('div');
@@ -88,8 +105,8 @@ function renderCommentsFromData(commentsData) {
     commentEl.style.top = `${commentData.y}px`;
     commentEl.style.width = `${commentData.width}px`;
     commentEl.style.height = `${commentData.height}px`;
-    
-    commentEl.innerHTML =  `
+
+    commentEl.innerHTML = `
     <div class="comment-control-panel">
       <div class="comment-control">###</div>
       <button class="comment-delete-btn" title="Delete comment">×</button>
@@ -99,14 +116,14 @@ function renderCommentsFromData(commentsData) {
     </div>
     <div class="comment-resize-handle" title="Drag to resize"></div>
      `;
-    
+
     document.body.appendChild(commentEl);
     makeCommentDraggable(commentEl);
     makeCommentResizable(commentEl);
-    
+
     const contentEl = commentEl.querySelector('.comment-content');
     contentEl.addEventListener('input', () => updateCommentsInFirebase(getCommentsData()));
-    
+
     const deleteBtn = commentEl.querySelector('.comment-delete-btn');
     deleteBtn.addEventListener('click', () => {
       commentEl.remove();
@@ -121,6 +138,20 @@ addCommentBtn.addEventListener('click', addComment);
 const motionTypeEl = document.getElementById('motionType');
 
 console.log(motionTypeEl.innerText);
+
+const wrapSelection = () => {
+  // Get the user's current text selection
+  const selection = window.getSelection();
+
+  // Ensure the user actually selected something
+  if (!selection.rangeCount || selection.isCollapsed) return;
+
+  // Get the precise range of the selected text
+  const range = selection.getRangeAt(0);
+
+  return range;
+
+};
 
 const makeCommentDraggable = (comment) => {
   const control = comment.querySelector('.comment-control');
@@ -138,7 +169,7 @@ const makeCommentDraggable = (comment) => {
     comment.classList.add('dragging');
     control.setPointerCapture(event.pointerId);
 
-     updateCommentsInFirebase(getCommentsData())
+    updateCommentsInFirebase(getCommentsData())
   });
 
   control.addEventListener('pointerup', () => {
@@ -175,8 +206,8 @@ const makeCommentResizable = (comment) => {
     resizeStartHeight = rect.height;
     handle.setPointerCapture(event.pointerId);
 
-    
-   updateCommentsInFirebase(getCommentsData());
+
+    updateCommentsInFirebase(getCommentsData());
   });
 
   handle.addEventListener('pointerup', () => {
@@ -197,6 +228,156 @@ function stopResizing() {
   if (!resizingComment) return;
   resizingComment = null;
 }
+
+xMark.addEventListener('click', () => {
+  linkableDisplay.style.display = 'none';
+})
+
+const addLinkable = (doc, motionType, entry, previewContent) => {
+  const range = wrapSelection();
+
+  const anchor = document.createElement('a');
+  anchor.href = `/editor.html?docId=${doc}&motionType=${motionType}#${entry}`;
+
+  anchor.appendChild(range.extractContents());
+
+  range.insertNode(anchor);
+
+  anchor.addEventListener('mousedown', (e) => {
+    console.log('hello?');
+    e.preventDefault();
+    window.location.href = anchor.href;
+  });
+
+ anchor.addEventListener('mouseenter', () => {
+    // Remove any existing preview first
+    console.log('hovered');
+    document.querySelector('.linkable-preview')?.remove();
+
+    const preview = document.createElement('div');
+    preview.classList.add('linkable-preview');
+    preview.textContent = previewContent;
+
+    // Position it near the anchor
+    const rect = anchor.getBoundingClientRect();
+    preview.style.position = 'fixed';
+    preview.style.top = `${rect.bottom + 8}px`;
+    preview.style.left = `${rect.left}px`;
+    preview.style.zIndex = '9999';
+    preview.style.background = '#fff';
+    preview.style.border = '1px solid #ccc';
+    preview.style.borderRadius = '6px';
+    preview.style.padding = '8px 12px';
+    preview.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+
+    document.body.appendChild(preview); // use body so position fixed works
+  });
+
+  anchor.addEventListener('mouseleave', () =>{
+    document.querySelector('.linkable-preview')?.remove();
+  })
+
+  saveDoc();
+
+  window.getSelection().removeAllRanges();
+}
+
+const showLinkable = async () => {
+  const linkableRef = collection(db, 'users', user.uid, 'linkable');
+  const snapshot = await getDocs(linkableRef);
+
+  snapshot.forEach(doc => {
+    const { texts, motion, motionType } = doc.data();
+
+    const title = document.createElement('h1');
+    title.classList.add('linkable-title');
+    title.textContent = motion;
+    linkableDisplay.appendChild(title);
+
+    texts.forEach(entry => {
+      const container = document.createElement('div');
+
+      container.classList.add('linkable-data-container');
+
+      const anchor = document.createElement('a');
+      anchor.href = `/editor.html?docId=${doc.id}&motionType=${motionType}#${entry.id}`;
+      anchor.textContent = entry.text;
+      anchor.addEventListener('mousedown', (e) => {
+        console.log('hello?');
+        e.preventDefault();
+        window.location.href = anchor.href;
+      });
+
+      const dataText = document.createElement('h2');
+      dataText.classList.add('linkable-data');
+      dataText.appendChild(anchor);
+      container.appendChild(dataText);
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.classList.add('linkable-checkbox');
+      checkbox.dataset.entryId = entry.id;
+      checkbox.dataset.docId = doc.id;
+      checkbox.dataset.motionType = motionType;
+      checkbox.dataset.previewContent = entry.text;
+
+      container.appendChild(checkbox);
+
+      linkableDisplay.appendChild(container);
+    });
+  });
+}
+
+linkableDisplay.addEventListener('change', (e) => {
+  if (e.target.classList.contains('linkable-checkbox')) {
+    const { entryId, docId, motionType, previewContent } = e.target.dataset;
+    if (e.target.checked) {
+      addLinkable(docId, motionType, entryId, previewContent);
+      console.log('Checked:', entryId, docId);
+      setInterval(() =>{
+       e.target.checked=false; 
+      }, 100)
+    } else {
+      console.log('Unchecked:', entryId, docId);
+    }
+  }
+});
+
+
+const makeLinkable = async () => {
+  const idBro = crypto.randomUUID();
+
+  const range = wrapSelection();
+
+  // Create the new span element
+  const span = document.createElement("span");
+  span.className = "highlighted-text";
+  span.id = idBro;
+
+  // Extract content and place it inside the span
+  span.appendChild(range.extractContents());
+
+  // Insert the decorated span back into the document
+  range.insertNode(span);
+
+  // Clear the selection highlight from the screen
+  window.getSelection().removeAllRanges();
+
+  await setDoc(doc(db, 'users', user.uid, 'linkable', currentDocId), {
+    texts: arrayUnion({
+      text: span.innerText,
+      id: idBro,
+      createdAt: new Date().toISOString()
+    }),
+    motion: motion.innerText,
+    motionType: currentMotionType
+  }, { merge: true });
+
+  showLinkable();
+  saveDoc();
+}
+
+linkableBtn.addEventListener('click', makeLinkable);
 
 document.addEventListener('pointermove', (event) => {
   if (draggingComment) {
@@ -248,17 +429,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   currentDocId = docId;
   currentMotionType = motionTypeFromUrl || 'General';
-  
+
   // Store motionType from URL to be used later
   if (motionTypeFromUrl) {
     window.pendingMotionType = motionTypeFromUrl;
   }
-  
+
   console.log(docId);
 });
-
-
-
 
 const saveBtn = document.querySelector('.save-btn');
 saveBtn.addEventListener('click', saveDoc);
@@ -278,16 +456,24 @@ const checkPermissions = async () => {
   console.log(currentMotionType);
 
   const snapshot = await getDoc(doc(db, currentMotionType, currentDocId));
-  const user = JSON.parse(localStorage.getItem('user'));
 
   console.log('Checking permissions for doc:', snapshot.data(), 'User:', user);
 
-  if (!snapshot.exists() || !user) {
+  if (!snapshot.exists()) {
     editorPermission = false;
     editor.setAttribute('contenteditable', 'false');
     const toolBar = document.querySelector('.toolbar');
     if (toolBar) toolBar.style.display = 'none';
     alert('This document does not exist or you are not signed in.');
+    return;
+  }
+
+  if (!user) {
+    editorPermission = false;
+    editor.setAttribute('contenteditable', 'false');
+    const toolBar = document.querySelector('.toolbar');
+    if (toolBar) toolBar.style.display = 'none';
+    alert('Please sign in first.');
     return;
   }
 
@@ -307,7 +493,7 @@ window.format = format;
 
 async function updateCommentsInFirebase(commentsData) {
   if (!currentDocId) return;
-  
+
   try {
     await setDoc(doc(db, currentMotionType, currentDocId), {
       motion: motion.innerText || 'Untitled',
@@ -418,6 +604,24 @@ motionTypeEl.addEventListener('input', () => { scheduleAutosave(); refreshDocInf
 
 let unsubscribe;
 
+window.addEventListener('load', () => {
+  const hash = window.location.hash.substring(1);
+  if (!hash) return;
+
+  // Wait for dynamic content to render
+  const tryScroll = setInterval(() => {
+    const target = document.getElementById(hash);
+    if (target) {
+      clearInterval(tryScroll);
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.style.backgroundColor = 'yellow';
+    }
+  }, 100); // check every 100ms
+
+  // Stop trying after 5 seconds
+  setTimeout(() => clearInterval(tryScroll), 5000);
+});
+
 window.onload = async () => {
   // Apply motionType from URL if it was passed
   if (window.pendingMotionType) {
@@ -427,7 +631,7 @@ window.onload = async () => {
     }
     delete window.pendingMotionType;
   }
-  
+
   await checkPermissions();
   if (currentDocId) {
     const docRef = doc(db, currentMotionType, currentDocId);
@@ -440,7 +644,7 @@ window.onload = async () => {
         comment = data.comments || [];
 
         console.log(comment);
-        
+
         // Render comments if they differ from current DOM state
         const currentCommentsData = getCommentsData();
         if (JSON.stringify(currentCommentsData) !== JSON.stringify(comment)) {

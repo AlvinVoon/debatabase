@@ -2,9 +2,13 @@ import { db } from './firebase.js';
 import { 
   collection, 
   getDocs,
+  getDoc,
+  doc,
   query,
   orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const filter = document.querySelector('.filter');
 
 const filterItems = document.querySelectorAll('.filter-item');
 
@@ -71,16 +75,21 @@ let selectedFilter = null;
 
 filterItems.forEach(item => {
   item.addEventListener('click', () => {
-    filterItems.forEach(i => i.classList.remove('active'));
-    item.classList.add('active');
+    const isActive = item.classList.contains('active'); // check BEFORE removing
 
-    selectedFilter = item.textContent.trim();
+    filterItems.forEach(i => i.classList.remove('active'));
+
+    if (!isActive) {
+      item.classList.add('active');
+      selectedFilter = item.textContent.trim();
+    } else {
+      selectedFilter = null; // or '' or 'all' depending on your logic
+    }
+
     console.log('Selected filter:', selectedFilter);
     loadDocuments();
-
   });
 });
-
 
 
 async function loadDocuments() {
@@ -119,6 +128,7 @@ async function loadDocuments() {
     console.error("Error loading documents: ", e);
   }
 }
+
 
 window.addEventListener('DOMContentLoaded', () => {
   loadDocuments();
