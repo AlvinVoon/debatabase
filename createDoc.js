@@ -1,7 +1,7 @@
 // =====================
 // LOAD FIREBASE + GOOGLE SCRIPTS
 import { db } from './firebase.js';
-import { collection, addDoc, setDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { collection, addDoc, setDoc, doc, getDoc, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // =====================
 const loadScript = (src) =>
@@ -84,19 +84,21 @@ createBtn.addEventListener('click', () => {
         });
 
       }
-      
+
       // Get current user data to increment casesCreated properly
       const userDocRef = doc(db, 'users', owner);
       const userDoc = await getDoc(userDocRef);
       const currentCasesCreated = userDoc.exists() ? (userDoc.data().casesCreated || 0) : 0;
-      
+
       await setDoc(doc(db, 'users', owner), {
         displayName: author,
         email: user.email || '',
         uid: owner,
-        casesCreated: currentCasesCreated + 1,
-      }, { merge: true
-      })
+        ...(visibility ? {} : {
+          privateDocs: arrayUnion(docRef.id + '_' + motionType + '_' + title),
+        }),
+        casesCreated: increment(1), // also safer than reading + writing manually
+      }, { merge: true });
       window.location.href = `editor.html?docId=${docRef.id}&motionType=${encodeURIComponent(motionType)}`;
     } catch (err) {
       console.error('Failed to create document', err);

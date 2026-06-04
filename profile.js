@@ -2,6 +2,7 @@ import { db } from './firebase.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const debatabaseTitle = document.querySelector('.debatabase');
+const privateCasesSection = document.querySelector('#private-cases');
 
 debatabaseTitle.addEventListener('click', () => {
   window.location.href = 'index.html';
@@ -60,5 +61,34 @@ const displayProfile = (userData) => {
     </div>
   `;
 }
+
+const privateCases = async () => {
+  const userDocRef = doc(db, 'users', user.uid);
+  const userDoc = await getDoc(userDocRef);
+  const docs = userDoc.data().privateDocs;
+  const docsId = docs.map(doc => doc.split('_')[0]);
+  const docsMotion = docs.map(doc => doc.split('_')[2]);
+  const docsType = docs.map(doc => doc.split('_')[1]);
+
+  docs.forEach(doc => {
+    console.log(doc);
+    const [docId, motionType, motion] = doc.split('_');
+    const caseCard = document.createElement('div');
+    caseCard.className = 'case-card';
+    caseCard.innerHTML = `
+    <a href="editor.html?docId=${docId}&motionType=${encodeURIComponent(motionType)}">
+      <h3>Motion: ${motion}</h3>
+      <p>${motionType}</p>
+      </a>
+    `;
+    privateCasesSection.appendChild(caseCard);
+  });
+
+  console.log(docsId);
+  console.log(docsMotion);
+  console.log(docsType);
+}
+
+privateCases();
 
 window.addEventListener('DOMContentLoaded', loadUserProfile);
