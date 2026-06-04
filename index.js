@@ -237,19 +237,19 @@ const addLinkable = (doc, motionType, entry, previewContent) => {
   const range = wrapSelection();
 
   const anchor = document.createElement('a');
-  anchor.href = `/editor.html?docId=${doc}&motionType=${encodeURIComponent(motionType)}#${entry}`;
+  const relativeHref = `editor.html?docId=${doc}&motionType=${encodeURIComponent(motionType)}#${entry}`;
+  anchor.href = relativeHref;
 
   anchor.appendChild(range.extractContents());
 
   range.insertNode(anchor);
 
   anchor.addEventListener('mousedown', (e) => {
-    console.log('hello?');
     e.preventDefault();
-    window.location.href = anchor.href;
+    window.location.href = relativeHref; // ✅ use variable, not anchor.href
   });
 
- anchor.addEventListener('mouseenter', () => {
+  anchor.addEventListener('mouseenter', () => {
     // Remove any existing preview first
     console.log('hovered');
     document.querySelector('.linkable-preview')?.remove();
@@ -273,7 +273,7 @@ const addLinkable = (doc, motionType, entry, previewContent) => {
     document.body.appendChild(preview); // use body so position fixed works
   });
 
-  anchor.addEventListener('mouseleave', () =>{
+  anchor.addEventListener('mouseleave', () => {
     document.querySelector('.linkable-preview')?.remove();
   })
 
@@ -300,12 +300,13 @@ const showLinkable = async () => {
       container.classList.add('linkable-data-container');
 
       const anchor = document.createElement('a');
-      anchor.href = `/editor.html?docId=${doc.id}&motionType=${encodeURIComponent(motionType)}#${entry.id}`;
+      const relativeHref = `editor.html?docId=${doc.id}&motionType=${encodeURIComponent(motionType)}#${entry.id}`;
+      anchor.href = relativeHref;
       anchor.textContent = entry.text;
+
       anchor.addEventListener('mousedown', (e) => {
-        console.log('hello?');
         e.preventDefault();
-        window.location.href = anchor.href;
+        window.location.href = relativeHref; // ✅ relative, not anchor.href
       });
 
       const dataText = document.createElement('h2');
@@ -334,8 +335,8 @@ linkableDisplay.addEventListener('change', (e) => {
     if (e.target.checked) {
       addLinkable(docId, motionType, entryId, previewContent);
       console.log('Checked:', entryId, docId);
-      setInterval(() =>{
-       e.target.checked=false; 
+      setInterval(() => {
+        e.target.checked = false;
       }, 100)
     } else {
       console.log('Unchecked:', entryId, docId);
