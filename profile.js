@@ -56,6 +56,7 @@ const displayProfile = (userData) => {
             <span class="stat-value">${userData.casesEdited || 0}</span>
             <span class="stat-label">Cases Edited</span>
           </div>
+          <img class="badge" src="pioneer_badgge-v2.png"/>
         </div>
       </div>
     </div>
