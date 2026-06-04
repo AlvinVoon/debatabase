@@ -232,33 +232,27 @@ function stopResizing() {
 xMark.addEventListener('click', () => {
   linkableDisplay.style.display = 'none';
 })
-
-const addLinkable = (doc, motionType, entry, previewContent) => {
-  const range = wrapSelection();
-
-  const anchor = document.createElement('a');
-  const relativeHref = `editor.html?docId=${doc}&motionType=${encodeURIComponent(motionType)}#${entry}`;
-  anchor.href = relativeHref;
-
-  anchor.appendChild(range.extractContents());
-
-  range.insertNode(anchor);
-
-  anchor.addEventListener('mousedown', (e) => {
+// One-time setup — call this once on page load
+const initLinkablePreviews = () => {
+  document.addEventListener('mousedown', (e) => {
+      if (!(e.target instanceof Element)) return;
+    const anchor = e.target.closest('a');
+    if (!anchor) return;
     e.preventDefault();
-    window.location.href = relativeHref; // ✅ use variable, not anchor.href
+    window.location.href = anchor.href;
   });
 
-  anchor.addEventListener('mouseenter', () => {
-    // Remove any existing preview first
-    console.log('hovered');
+  document.addEventListener('mouseenter', (e) => {
+      if (!(e.target instanceof Element)) return;
+    const anchor = e.target.closest('a');
+    if (!anchor) return;
+
     document.querySelector('.linkable-preview')?.remove();
 
     const preview = document.createElement('div');
     preview.classList.add('linkable-preview');
-    preview.textContent = previewContent;
+    preview.textContent = anchor.dataset.preview ?? '';
 
-    // Position it near the anchor
     const rect = anchor.getBoundingClientRect();
     preview.style.position = 'fixed';
     preview.style.top = `${rect.bottom + 8}px`;
@@ -270,17 +264,42 @@ const addLinkable = (doc, motionType, entry, previewContent) => {
     preview.style.padding = '8px 12px';
     preview.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
 
-    document.body.appendChild(preview); // use body so position fixed works
-  });
+    document.body.appendChild(preview);
+  }, true); // capture phase required for mouseenter delegation
 
-  anchor.addEventListener('mouseleave', () => {
+  document.addEventListener('mouseleave', (e) => {
+      if (!(e.target instanceof Element)) return;
+    const anchor = e.target.closest('a');
+    if (!anchor) return;
     document.querySelector('.linkable-preview')?.remove();
-  })
+  }, true);
+};
+
+const addLinkable = (doc, motionType, entry, previewContent) => {
+  const selection = window.getSelection();
+
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+    console.warn('addLinkable: no valid selection');
+    return;
+  }
+
+  const range = selection.getRangeAt(0).cloneRange();
+  selection.removeAllRanges();
+
+  const anchor = document.createElement('a');
+  const relativeHref = `editor.html?docId=${doc}&motionType=${encodeURIComponent(motionType)}#${entry}`;
+  anchor.href = relativeHref;
+  anchor.dataset.preview = previewContent; // store preview on the element for delegation to read
+
+  anchor.appendChild(range.extractContents());
+  range.insertNode(anchor);
+  range.collapse(false);
 
   saveDoc();
+};
 
-  window.getSelection().removeAllRanges();
-}
+// Call once on page load
+initLinkablePreviews();
 
 const showLinkable = async () => {
   const linkableRef = collection(db, 'users', user.uid, 'linkable');
