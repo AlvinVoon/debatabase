@@ -66,6 +66,10 @@ const privateCases = async () => {
   const userDocRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userDocRef);
   const docs = userDoc.data().privateDocs;
+  if (!docs || docs.length === 0){
+    privateCasesSection.innerHTML = '<p>No private cases found.</p>';
+    return;
+  }
   const docsId = docs.map(doc => doc.split('_')[0]);
   const docsMotion = docs.map(doc => doc.split('_')[2]);
   const docsType = docs.map(doc => doc.split('_')[1]);

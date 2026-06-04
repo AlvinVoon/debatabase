@@ -237,7 +237,7 @@ const addLinkable = (doc, motionType, entry, previewContent) => {
   const range = wrapSelection();
 
   const anchor = document.createElement('a');
-  anchor.href = `/editor.html?docId=${doc}&motionType=${motionType}#${entry}`;
+  anchor.href = `/editor.html?docId=${doc}&motionType=${encodeURIComponent(motionType)}#${entry}`;
 
   anchor.appendChild(range.extractContents());
 
@@ -300,7 +300,7 @@ const showLinkable = async () => {
       container.classList.add('linkable-data-container');
 
       const anchor = document.createElement('a');
-      anchor.href = `/editor.html?docId=${doc.id}&motionType=${motionType}#${entry.id}`;
+      anchor.href = `/editor.html?docId=${doc.id}&motionType=${encodeURIComponent(motionType)}#${entry.id}`;
       anchor.textContent = entry.text;
       anchor.addEventListener('mousedown', (e) => {
         console.log('hello?');
