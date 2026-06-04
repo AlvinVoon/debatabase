@@ -135,11 +135,7 @@
  }
 
  .highlighted-text {
-   background-color: #ffeb3b;
-   color: #000000;
    padding: 2px 4px;
-   border-radius: 4px;
-   font-weight: bold;
  }
 
  .linkable-display {
@@ -180,6 +176,7 @@
 
  a {
     cursor: pointer;
+    color:inherit;
 }
 
 i {
