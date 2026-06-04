@@ -485,7 +485,6 @@ const checkPermissions = async () => {
     editor.setAttribute('contenteditable', 'false');
     const toolBar = document.querySelector('.toolbar');
     if (toolBar) toolBar.style.display = 'none';
-    alert('You do not have permission to edit this document. You can view it in read-only mode.');
   }
 }
 
