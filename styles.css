@@ -13,6 +13,7 @@
    position: sticky;
    top: 0;
    z-index: 10;
+   overflow-x:auto;
  }
 
  .toolbar button {
@@ -31,6 +32,7 @@
    display: flex;
    justify-content: center;
    padding: 30px;
+   margin-right:200px;
  }
 
  .editor {
@@ -188,3 +190,37 @@ i {
   height:200px;
   background-color:white;
 }
+
+.tab-display{
+  position:sticky;
+  width:200px;
+  height:500px;
+  background-color:rgba(255, 255, 255, 0.252);
+  border-radius:10px;
+  left:0;
+  display:flex;
+  flex-direction: column;
+  padding:20px;
+  margin-right:50px;
+  align-items: center;
+}
+
+.tab-item{
+  width:80%;
+  height:50px;
+  border-radius:10px;
+  background-color:white;
+  margin-top:10px;
+  display:flex;
+  justify-content: center;
+  align-items: center;
+}
+
+ @media screen and (max-width:768px) {
+  .tab-display{
+    display:none;
+  }
+  .editor-container{
+    margin-right:0px;
+  }
+ }

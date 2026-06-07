@@ -66,10 +66,11 @@ createBtn.addEventListener('click', () => {
         motion: title,
         motionType: motionType,
         visibility: visibility ? 'public' : 'private',
-        content: '',
+        content: [''],
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
+        tabs:["Untitled"]
       });
 
       if (visibility === true) {

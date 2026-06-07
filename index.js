@@ -22,6 +22,10 @@ const linkableDisplay = document.querySelector('.linkable-display');
 
 const showLinkableBtn = document.querySelector('.showlinkable-btn');
 
+const shareBtn = document.querySelector('.share-btn');
+
+const tabDisplay = document.querySelector('.tab-display');
+
 const user = JSON.parse(localStorage.getItem('user'));
 
 let draggingComment = null;
@@ -33,6 +37,93 @@ let resizeStartY = 0;
 let resizeStartWidth = 0;
 let resizeStartHeight = 0;
 let comment = [];
+let tab = [];
+let selectedTab = 0;
+let totalTab = [];
+
+shareBtn.addEventListener('click', async () => {
+  const shareData = {
+      title:document.title,
+      text:"Check out this case on Debatabase!",
+      url:window.location.href
+  }
+
+  if (navigator.share){
+    try{
+      await navigator.share(shareData);
+    } catch(err){
+      console.log(err);
+    }
+   } else {
+      try {
+        await navigator.clipboard.writeText(shareData.url);
+
+        shareBtn.textContent = 'Link Copied!';
+
+        setTimeout(() => {
+          shareBtn.textContent = 'Share';
+        }, 2000);
+        
+         } catch (err){
+            console.error(err);
+          }
+        }
+})
+
+const updateTabsInFirebase = async () => {
+  const commentData = getCommentsData();
+   try {
+    await setDoc(doc(db, currentMotionType, currentDocId), {
+      motion: motion.innerText,
+      content: tab,
+      timestamp: new Date(),
+      author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
+      owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
+      comments:commentData,
+      tabs:totalTab
+    }, { merge: true });
+  } catch (e) {
+    console.error('Error updating comments:', e);
+  }
+}
+
+const displayTab = (data, title) => {
+  tabDisplay.innerHTML = '';
+  const addBtn = document.createElement('div');
+  addBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+  addBtn.addEventListener('click', () => {
+    totalTab.push('Tab' + (tab.length + 1));
+    tab.push('New Tab' + (tab.length + 1));
+
+    updateTabsInFirebase();
+    console.log(totalTab);
+  })
+  tabDisplay.appendChild(addBtn);
+
+  for (let i = 0; i < data; i++) {
+    const tabItem = document.createElement('div');
+    tabItem.classList.add('tab-item');
+    tabItem.contentEditable = true;
+    tabItem.innerText = title[i];
+    tabItem.dataset.id = i;
+    tabItem.addEventListener('click', () => {
+      selectedTab = tabItem.dataset.id;
+      editor.innerHTML = tab[selectedTab];
+      console.log(tabItem.dataset);
+    })
+    let debounceTimer;
+    tabItem.addEventListener('input', () => {
+      totalTab[i] = tabItem.innerHTML;
+
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        updateTabsInFirebase();
+      }, 500);
+    })
+    tabDisplay.appendChild(tabItem);
+  }
+}
+
 
 showLinkableBtn.addEventListener('click', () => {
   showLinkable();
@@ -516,11 +607,12 @@ async function updateCommentsInFirebase(commentsData) {
   try {
     await setDoc(doc(db, currentMotionType, currentDocId), {
       motion: motion.innerText || 'Untitled',
-      content: editor.innerHTML,
+      content: tab,
       timestamp: new Date(),
       author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
       owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
-      comments: commentsData
+      comments: commentsData,
+      tabs:totalTab
     }, { merge: true });
   } catch (e) {
     console.error('Error updating comments:', e);
@@ -534,13 +626,15 @@ async function saveDoc() {
     if (currentDocId) {
       // Update existing document
       const commentsData = getCommentsData();
+      tab[selectedTab] = editor.innerHTML;
       await setDoc(doc(db, currentMotionType, currentDocId), {
         motion: motion.innerText || 'Untitled',
-        content: editor.innerHTML,
+        content: tab,
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
         comments: commentsData,
+        tabs:totalTab
       });
       await setDoc(doc(db, 'documents', currentDocId), {
         motion: motion.innerText || 'Untitled',
@@ -554,13 +648,15 @@ async function saveDoc() {
     } else {
       // Create new document
       const commentsData = getCommentsData();
+      tab[0] = editor.innerHTML;
       const docRef = await addDoc(collection(db, currentMotionType), {
         motion: motion.innerText || 'Untitled',
-        content: editor.innerHTML,
+        content: tab,
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
         comments: commentsData,
+        tabs:totalTab
       });
       await addDoc(collection(db, 'documents'), {
         motion: motion.innerText || 'Untitled',
@@ -591,18 +687,21 @@ function scheduleAutosave() {
   clearTimeout(timeout);
 
   timeout = setTimeout(async () => {
-    localStorage.setItem('doc', editor.innerHTML);
+    localStorage.setItem('doc', tab);
     localStorage.setItem('motion', motion.innerText);
 
     if (currentDocId) {
       const commentsData = getCommentsData();
+      tab[selectedTab] = editor.innerHTML;
+      console.log(tab);
       await setDoc(doc(db, currentMotionType, currentDocId), {
         motion: motion.innerText || 'Untitled',
-        content: editor.innerHTML,
+        content: tab,
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
-        comments: commentsData
+        comments: commentsData,
+        tabs:totalTab
       });
       await setDoc(doc(db, 'documents', currentDocId), {
         motion: motion.innerText || 'Untitled',
@@ -660,9 +759,15 @@ window.onload = async () => {
       if (snapshot.exists()) {
         const data = snapshot.data();
 
-        comment = data.comments || [];
+        console.log(data);
 
+        tab = data.content;
+        totalTab = data.tabs;
+
+        comment = data.comments || [];
         console.log(comment);
+
+        displayTab(totalTab.length, totalTab);
 
         // Render comments if they differ from current DOM state
         const currentCommentsData = getCommentsData();
@@ -673,8 +778,9 @@ window.onload = async () => {
         motion.innerText = data.motion || 'Untitled';
 
         // Prevent cursor jump / overwrite while typing
-        if (editor.innerHTML !== data.content) {
-          editor.innerHTML = data.content;
+        if (editor.innerHTML !== tab[selectedTab]) {
+          console.log('needs to sync')
+          editor.innerHTML = tab[selectedTab];
           showStatus('Synced');
         }
       }
