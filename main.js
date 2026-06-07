@@ -115,8 +115,8 @@ async function loadDocuments() {
       div.className = 'document-item';
       div.innerHTML = `
         <strong>${docData.motion || 'Untitled'}</strong><br>
-        <small>${new Date(docData.timestamp?.toMillis()).toLocaleString() || 'No timestamp'}</small>
-        <small>${docData.author || 'Unknown Author'}</small>
+<small>${new Date(docData.timestamp?.toMillis()).toLocaleDateString() || 'No timestamp'}</small>
+        <small>${docData.view || '0'} view</small>
       `;
       div.style.cursor = 'pointer';
       div.onclick = () => {

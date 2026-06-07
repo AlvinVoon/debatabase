@@ -70,7 +70,8 @@ createBtn.addEventListener('click', () => {
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
-        tabs:["Untitled"]
+        tabs: ["Untitled"],
+        view: 0
       });
 
       if (visibility === true) {
@@ -82,6 +83,7 @@ createBtn.addEventListener('click', () => {
           timestamp: new Date(),
           author,
           owner,
+          view: 0
         });
 
       }

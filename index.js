@@ -5,6 +5,8 @@ import {
   setDoc,
   doc,
   getDoc,
+  updateDoc,
+  increment,
   getDocs,
   arrayUnion,
   onSnapshot
@@ -117,6 +119,7 @@ document.addEventListener('focusin', () => {
 const displayTab = (data, title) => {
   tabDisplay.innerHTML = '';
   const addBtn = document.createElement('div');
+  if (editorPermission == true){
   addBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
   addBtn.addEventListener('click', () => {
     totalTab.push('Tab' + (tab.length + 1));
@@ -126,6 +129,7 @@ const displayTab = (data, title) => {
     console.log(totalTab);
   })
   tabDisplay.appendChild(addBtn);
+}
 
   for (let i = 0; i < data; i++) {
     const tabItem = document.createElement('div');
@@ -759,6 +763,17 @@ function scheduleAutosave() {
   }, 1000);
 }
 
+const updateViewCount = async () => {
+  if (currentDocId) {
+    await updateDoc(doc(db, currentMotionType, currentDocId), {
+      view: increment(1)
+    });
+    await updateDoc(doc(db, 'documents', currentDocId), {
+      view: increment(1)
+    });
+  }
+};
+
 editor.addEventListener('input', scheduleAutosave);
 motion.addEventListener('input', () => { scheduleAutosave(); refreshDocInfo(); });
 motionTypeEl.addEventListener('input', () => { scheduleAutosave(); refreshDocInfo(); });
@@ -794,6 +809,10 @@ window.onload = async () => {
   }
 
   await checkPermissions();
+
+  if (editorPermission == false){
+    updateViewCount();
+  }
   if (currentDocId) {
     const docRef = doc(db, currentMotionType, currentDocId);
 
