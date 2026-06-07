@@ -10,6 +10,7 @@ import {
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+const container = document.querySelector('.editor-container');
 const editor = document.getElementById('editor');
 const status = document.getElementById('status');
 const motion = document.getElementById('motion');
@@ -23,6 +24,8 @@ const linkableDisplay = document.querySelector('.linkable-display');
 const showLinkableBtn = document.querySelector('.showlinkable-btn');
 
 const shareBtn = document.querySelector('.share-btn');
+
+const splitBtn = document.querySelector('.split-btn');
 
 const tabDisplay = document.querySelector('.tab-display');
 
@@ -40,52 +43,76 @@ let comment = [];
 let tab = [];
 let selectedTab = 0;
 let totalTab = [];
+let splitScreenCheck = false;
+
+let lastActive;
 
 shareBtn.addEventListener('click', async () => {
   const shareData = {
-      title:document.title,
-      text:"Check out this case on Debatabase!",
-      url:window.location.href
+    title: document.title,
+    text: "Check out this case on Debatabase!",
+    url: window.location.href
   }
 
-  if (navigator.share){
-    try{
+  if (navigator.share) {
+    try {
       await navigator.share(shareData);
-    } catch(err){
+    } catch (err) {
       console.log(err);
     }
-   } else {
-      try {
-        await navigator.clipboard.writeText(shareData.url);
+  } else {
+    try {
+      await navigator.clipboard.writeText(shareData.url);
 
-        shareBtn.textContent = 'Link Copied!';
+      shareBtn.textContent = 'Link Copied!';
 
-        setTimeout(() => {
-          shareBtn.textContent = 'Share';
-        }, 2000);
-        
-         } catch (err){
-            console.error(err);
-          }
-        }
+      setTimeout(() => {
+        shareBtn.textContent = 'Share';
+      }, 2000);
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+})
+
+splitBtn.addEventListener('click', () => {
+  if (splitScreenCheck == false){
+  splitScreenCheck = true;
+  const editor = document.createElement('div');
+  editor.classList.add('editor');
+  editor.id = 'editor2';
+  editor.contentEditable = true;
+  container.appendChild(editor);
+  }
 })
 
 const updateTabsInFirebase = async () => {
   const commentData = getCommentsData();
-   try {
+  try {
     await setDoc(doc(db, currentMotionType, currentDocId), {
       motion: motion.innerText,
       content: tab,
       timestamp: new Date(),
       author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
       owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
-      comments:commentData,
-      tabs:totalTab
+      comments: commentData,
+      tabs: totalTab
     }, { merge: true });
   } catch (e) {
     console.error('Error updating comments:', e);
   }
 }
+
+document.addEventListener('focusin', () => {
+  if (document.activeElement.id == 'editor') {
+    lastActive = 'editor';
+  }
+  else if (document.activeElement.id == 'editor2') {
+    lastActive = 'editor2';
+  }
+  console.log(lastActive);
+});
 
 const displayTab = (data, title) => {
   tabDisplay.innerHTML = '';
@@ -108,8 +135,24 @@ const displayTab = (data, title) => {
     tabItem.dataset.id = i;
     tabItem.addEventListener('click', () => {
       selectedTab = tabItem.dataset.id;
-      editor.innerHTML = tab[selectedTab];
       console.log(tabItem.dataset);
+      if (splitScreenCheck == true) {
+        console.log('split screen');
+        if (lastActive === 'editor') {
+          console.log('editor1 selected');
+          editor.innerHTML = tab[selectedTab];
+        }
+        else {
+          const editor2 = document.getElementById('editor2');
+          console.log(editor2);
+          editor2.innerHTML = tab[selectedTab];
+        }
+      }
+      else {
+        console.log('no split screen');
+        editor.innerHTML = tab[selectedTab];
+      }
+
     })
     let debounceTimer;
     tabItem.addEventListener('input', () => {
@@ -326,7 +369,7 @@ xMark.addEventListener('click', () => {
 // One-time setup — call this once on page load
 const initLinkablePreviews = () => {
   document.addEventListener('mousedown', (e) => {
-      if (!(e.target instanceof Element)) return;
+    if (!(e.target instanceof Element)) return;
     const anchor = e.target.closest('a');
     if (!anchor) return;
     e.preventDefault();
@@ -334,7 +377,7 @@ const initLinkablePreviews = () => {
   });
 
   document.addEventListener('mouseenter', (e) => {
-      if (!(e.target instanceof Element)) return;
+    if (!(e.target instanceof Element)) return;
     const anchor = e.target.closest('a');
     if (!anchor) return;
 
@@ -359,7 +402,7 @@ const initLinkablePreviews = () => {
   }, true); // capture phase required for mouseenter delegation
 
   document.addEventListener('mouseleave', (e) => {
-      if (!(e.target instanceof Element)) return;
+    if (!(e.target instanceof Element)) return;
     const anchor = e.target.closest('a');
     if (!anchor) return;
     document.querySelector('.linkable-preview')?.remove();
@@ -612,7 +655,7 @@ async function updateCommentsInFirebase(commentsData) {
       author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
       owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
       comments: commentsData,
-      tabs:totalTab
+      tabs: totalTab
     }, { merge: true });
   } catch (e) {
     console.error('Error updating comments:', e);
@@ -634,7 +677,7 @@ async function saveDoc() {
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
         comments: commentsData,
-        tabs:totalTab
+        tabs: totalTab
       });
       await setDoc(doc(db, 'documents', currentDocId), {
         motion: motion.innerText || 'Untitled',
@@ -656,7 +699,7 @@ async function saveDoc() {
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
         comments: commentsData,
-        tabs:totalTab
+        tabs: totalTab
       });
       await addDoc(collection(db, 'documents'), {
         motion: motion.innerText || 'Untitled',
@@ -701,7 +744,7 @@ function scheduleAutosave() {
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
         comments: commentsData,
-        tabs:totalTab
+        tabs: totalTab
       });
       await setDoc(doc(db, 'documents', currentDocId), {
         motion: motion.innerText || 'Untitled',
