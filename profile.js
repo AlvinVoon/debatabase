@@ -66,7 +66,7 @@ const displayProfile = (userData) => {
 const privateCases = async () => {
   const userDocRef = doc(db, 'users', user.uid);
   const userDoc = await getDoc(userDocRef);
-  const docs = userDoc.data().privateDocs;
+  const docs = userDoc.data().cases;
   if (!docs || docs.length === 0){
     privateCasesSection.innerHTML = '<p>No private cases found.</p>';
     return;

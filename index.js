@@ -775,8 +775,8 @@ const updateViewCount = async () => {
 };
 
 editor.addEventListener('input', scheduleAutosave);
-motion.addEventListener('input', () => { scheduleAutosave(); refreshDocInfo(); });
-motionTypeEl.addEventListener('input', () => { scheduleAutosave(); refreshDocInfo(); });
+motion.addEventListener('input', () => { scheduleAutosave();  });
+motionTypeEl.addEventListener('input', () => { scheduleAutosave();  });
 
 let unsubscribe;
 

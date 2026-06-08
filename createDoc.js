@@ -97,9 +97,7 @@ createBtn.addEventListener('click', () => {
         displayName: author,
         email: user.email || '',
         uid: owner,
-        ...(visibility ? {} : {
-          privateDocs: arrayUnion(docRef.id + '_' + motionType + '_' + title),
-        }),
+        cases: arrayUnion(docRef.id + '_' + motionType + '_' + title),
         casesCreated: increment(1), // also safer than reading + writing manually
       }, { merge: true });
       window.location.href = `editor.html?docId=${docRef.id}&motionType=${encodeURIComponent(motionType)}`;

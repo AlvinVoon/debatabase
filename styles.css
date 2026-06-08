@@ -65,6 +65,9 @@
    display: flex;
    align-items: center;
    min-width: 180px;
+   max-width:250px;
+   overflow-x:auto;
+   white-space: nowrap;
  }
 
  .motionType {
