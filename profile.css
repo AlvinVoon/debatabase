@@ -97,7 +97,7 @@ a {
 .badge{
     width: 200px;
     position:absolute;
-    bottom:80px;
-    right:100px;
+    bottom:60px;
+    right:33%;
     rotate: 15deg;
 }
