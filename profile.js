@@ -38,6 +38,8 @@ const displayProfile = (userData) => {
   const profileContainer = document.querySelector('#profile-container');
   
   profileContainer.className = 'profile-container';
+
+  console.log(userData);
   
   profileContainer.innerHTML = `
     <div class="profile-card">
@@ -56,11 +58,18 @@ const displayProfile = (userData) => {
             <span class="stat-value">${userData.casesEdited || 0}</span>
             <span class="stat-label">Cases Edited</span>
           </div>
-          <img class="badge" src="pioneer_badgge-v2.png"/>
         </div>
       </div>
     </div>
   `;
+
+  if (userData.badge == 1){
+    console.log('got badge');
+    const badge = document.createElement('img');
+    badge.classList.add('badge');
+    badge.src="pioneer_badgge-v2.png";
+    profileContainer.appendChild(badge);
+  }
 }
 
 const privateCases = async () => {
