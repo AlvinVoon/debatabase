@@ -144,6 +144,13 @@ const displayTab = (data, title) => {
     tabItem.innerText = title[i];
     tabItem.dataset.id = i;
     tabItem.addEventListener('click', () => {
+const allTabItems = document.querySelectorAll('.tab-item');
+
+allTabItems.forEach(item => {
+    item.classList.remove('active-tabItem');
+});
+
+tabItem.classList.add('active-tabItem');
       selectedTab = tabItem.dataset.id;
 
       if (splitScreenCheck == true) {
@@ -429,7 +436,7 @@ const initLinkablePreviews = () => {
   }, true);
 };
 
-const addLinkable = (doc, motionType, entry, previewContent) => {
+const addLinkable = (doc, motionType, entry, previewContent, tabNum) => {
   const selection = window.getSelection();
 
   if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
@@ -441,7 +448,7 @@ const addLinkable = (doc, motionType, entry, previewContent) => {
   selection.removeAllRanges();
 
   const anchor = document.createElement('a');
-  const relativeHref = `editor.html?docId=${doc}&motionType=${encodeURIComponent(motionType)}#${entry}`;
+  const relativeHref = `editor.html?docId=${doc}&motionType=${encodeURIComponent(motionType)}&tabNum=${tabNum}#${entry}`;
   anchor.href = relativeHref;
   anchor.dataset.preview = previewContent; // store preview on the element for delegation to read
 
@@ -473,7 +480,7 @@ const showLinkable = async () => {
       container.classList.add('linkable-data-container');
 
       const anchor = document.createElement('a');
-      const relativeHref = `editor.html?docId=${doc.id}&motionType=${encodeURIComponent(motionType)}#${entry.id}`;
+      const relativeHref = `editor.html?docId=${doc.id}&motionType=${encodeURIComponent(motionType)}&tabNum=${entry.tabNum}#${entry.id}`;
       anchor.href = relativeHref;
       anchor.textContent = entry.text;
 
@@ -494,6 +501,7 @@ const showLinkable = async () => {
       checkbox.dataset.docId = doc.id;
       checkbox.dataset.motionType = motionType;
       checkbox.dataset.previewContent = entry.text;
+      checkbox.dataset.tabNum = entry.tabNum;
 
       container.appendChild(checkbox);
 
@@ -504,9 +512,9 @@ const showLinkable = async () => {
 
 linkableDisplay.addEventListener('change', (e) => {
   if (e.target.classList.contains('linkable-checkbox')) {
-    const { entryId, docId, motionType, previewContent } = e.target.dataset;
+    const { entryId, docId, motionType, previewContent, tabNum } = e.target.dataset;
     if (e.target.checked) {
-      addLinkable(docId, motionType, entryId, previewContent);
+      addLinkable(docId, motionType, entryId, previewContent, tabNum);
       console.log('Checked:', entryId, docId);
       setInterval(() => {
         e.target.checked = false;
@@ -541,7 +549,8 @@ const makeLinkable = async () => {
     texts: arrayUnion({
       text: span.innerText,
       id: idBro,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      tabNum:selectedTab
     }),
     motion: motion.innerText,
     motionType: currentMotionType
@@ -592,6 +601,9 @@ let timeout = null; // debounce timer for autosave
 let currentDocId;
 let currentMotionType;
 
+let pendingTabNum = null;
+let pendingSectionId = null;
+
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
 
@@ -600,9 +612,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const docId = params.get('docId');
   const motionTypeFromUrl = params.get('motionType');
+  const tabNum = params.get('tabNum');
+  const sectionId = window.location.hash.slice(1); // Get hash without the #
 
   currentDocId = docId;
   currentMotionType = motionTypeFromUrl || 'General';
+  pendingTabNum = tabNum ? parseInt(tabNum) : null;
+  pendingSectionId = sectionId || null;
 
   // Store motionType from URL to be used later
   if (motionTypeFromUrl) {
@@ -874,6 +890,16 @@ window.onload = async () => {
 
         displayTab(totalTab.length, totalTab);
 
+        // Switch to pending tab if provided in URL
+        if (pendingTabNum !== null && pendingTabNum < totalTab.length) {
+          selectedTab = pendingTabNum;
+          const tabItems = document.querySelectorAll('.tab-item');
+          if (tabItems[selectedTab]) {
+            tabItems[selectedTab].click();
+          }
+          pendingTabNum = null; // Clear after use
+        }
+
         // Render comments if they differ from current DOM state
         const currentCommentsData = getCommentsData();
         if (JSON.stringify(currentCommentsData) !== JSON.stringify(comment)) {
@@ -887,6 +913,17 @@ window.onload = async () => {
           console.log('needs to sync')
           editor.innerHTML = tab[selectedTab];
           showStatus('Synced');
+        }
+
+        // Scroll to section if provided in URL hash
+        if (pendingSectionId) {
+          setTimeout(() => {
+            const element = document.getElementById(pendingSectionId);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 100);
+          pendingSectionId = null; // Clear after use
         }
       }
     });

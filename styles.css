@@ -218,6 +218,15 @@ i {
   justify-content: center;
   align-items: center;
   overflow-x:auto;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #888;
+  font-weight: 500;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-item:hover {
+  background-color: #f9f9f9;
 }
 
  @media screen and (max-width:768px) {
@@ -232,3 +241,10 @@ i {
  #editor2{
   margin-left: 50px;
  }
+
+.active-tabItem{
+  background-color: #f9f9f9;
+  color: #2d3748;
+  font-weight: 600;
+  border-bottom-color: #999;
+}
