@@ -117,6 +117,7 @@ async function loadDocuments() {
       <h3>${docData.motion || 'Untitled'}</h3>
       <div class="document-meta">
       <span class="document-date">${new Date(docData.timestamp?.toMillis()).toLocaleDateString() || 'No timestamp'}</span>
+      <span>${docData.motionType}</span>
       <span class="document-view"><div style="display:flex; gap:5px;">${docData.view || 0}<i class="fa-regular fa-eye"></i></div></span>
       </div>
 
