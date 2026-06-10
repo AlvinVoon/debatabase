@@ -79,13 +79,13 @@ shareBtn.addEventListener('click', async () => {
 })
 
 splitBtn.addEventListener('click', () => {
-  if (splitScreenCheck == false){
-  splitScreenCheck = true;
-  const editor = document.createElement('div');
-  editor.classList.add('editor');
-  editor.id = 'editor2';
-  editor.contentEditable = true;
-  container.appendChild(editor);
+  if (splitScreenCheck == false) {
+    splitScreenCheck = true;
+    const editor = document.createElement('div');
+    editor.classList.add('editor');
+    editor.id = 'editor2';
+    editor.contentEditable = true;
+    container.appendChild(editor);
   }
 })
 
@@ -119,17 +119,17 @@ document.addEventListener('focusin', () => {
 const displayTab = (data, title) => {
   tabDisplay.innerHTML = '';
   const addBtn = document.createElement('div');
-  if (editorPermission == true){
-  addBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
-  addBtn.addEventListener('click', () => {
-    totalTab.push('Tab' + (tab.length + 1));
-    tab.push('New Tab' + (tab.length + 1));
+  if (editorPermission == true) {
+    addBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+    addBtn.addEventListener('click', () => {
+      totalTab.push('Tab' + (tab.length + 1));
+      tab.push('New Tab' + (tab.length + 1));
 
-    updateTabsInFirebase();
-    console.log(totalTab);
-  })
-  tabDisplay.appendChild(addBtn);
-}
+      updateTabsInFirebase();
+      console.log(totalTab);
+    })
+    tabDisplay.appendChild(addBtn);
+  }
 
   for (let i = 0; i < data; i++) {
     const tabItem = document.createElement('div');
@@ -621,7 +621,11 @@ const checkPermissions = async () => {
     editorPermission = false;
     editor.setAttribute('contenteditable', 'false');
     const toolBar = document.querySelector('.toolbar');
-    if (toolBar) toolBar.style.display = 'none';
+toolbar.querySelectorAll('button:not(.add-comment-btn)').forEach(btn => btn.style.display = 'none');
+    const motion = document.querySelector('#motion');
+    motion.style.width = '100%';
+    motion.style.maxWidth = 'fit-content';
+
     alert('This document does not exist or you are not signed in.');
     return;
   }
@@ -630,7 +634,11 @@ const checkPermissions = async () => {
     editorPermission = false;
     editor.setAttribute('contenteditable', 'false');
     const toolBar = document.querySelector('.toolbar');
-    if (toolBar) toolBar.style.display = 'none';
+toolbar.querySelectorAll('button:not(.add-comment-btn)').forEach(btn => btn.style.display = 'none');
+    const motion = document.querySelector('#motion');
+    motion.style.width = '100%';
+    motion.style.maxWidth = 'fit-content';
+
     alert('Please sign in first.');
     return;
   }
@@ -640,8 +648,12 @@ const checkPermissions = async () => {
   } else {
     editorPermission = false;
     editor.setAttribute('contenteditable', 'false');
-    const toolBar = document.querySelector('.toolbar');
-    if (toolBar) toolBar.style.display = 'none';
+    const toolbar = document.querySelector('.toolbar');
+toolbar.querySelectorAll('button:not(.add-comment-btn)').forEach(btn => btn.style.display = 'none');
+    const motion = document.querySelector('#motion');
+    motion.style.width = '100%';
+    motion.style.maxWidth = 'fit-content';
+
   }
 }
 
@@ -652,14 +664,8 @@ async function updateCommentsInFirebase(commentsData) {
   if (!currentDocId) return;
 
   try {
-    await setDoc(doc(db, currentMotionType, currentDocId), {
-      motion: motion.innerText || 'Untitled',
-      content: tab,
-      timestamp: new Date(),
-      author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
-      owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
+    await updateDoc(doc(db, currentMotionType, currentDocId), {
       comments: commentsData,
-      tabs: totalTab
     }, { merge: true });
   } catch (e) {
     console.error('Error updating comments:', e);
@@ -670,11 +676,11 @@ async function saveDoc() {
   try {
     showStatus('Saving...');
 
-    if (currentDocId) {
+    if (currentDocId && editorPermission == true) {
       // Update existing document
       const commentsData = getCommentsData();
       tab[selectedTab] = editor.innerHTML;
-      await setDoc(doc(db, currentMotionType, currentDocId), {
+      await updateDoc(doc(db, currentMotionType, currentDocId), {
         motion: motion.innerText || 'Untitled',
         content: tab,
         timestamp: new Date(),
@@ -683,7 +689,7 @@ async function saveDoc() {
         comments: commentsData,
         tabs: totalTab
       });
-      await setDoc(doc(db, 'documents', currentDocId), {
+      await updateDoc(doc(db, 'documents', currentDocId), {
         motion: motion.innerText || 'Untitled',
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
@@ -703,7 +709,8 @@ async function saveDoc() {
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
         owner: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).uid : 'anonymous',
         comments: commentsData,
-        tabs: totalTab
+        tabs: totalTab,
+        view: 0
       });
       await addDoc(collection(db, 'documents'), {
         motion: motion.innerText || 'Untitled',
@@ -737,11 +744,11 @@ function scheduleAutosave() {
     localStorage.setItem('doc', tab);
     localStorage.setItem('motion', motion.innerText);
 
-    if (currentDocId) {
+    if (currentDocId && editorPermission == true) {
       const commentsData = getCommentsData();
       tab[selectedTab] = editor.innerHTML;
       console.log(tab);
-      await setDoc(doc(db, currentMotionType, currentDocId), {
+      await updateDoc(doc(db, currentMotionType, currentDocId), {
         motion: motion.innerText || 'Untitled',
         content: tab,
         timestamp: new Date(),
@@ -750,7 +757,7 @@ function scheduleAutosave() {
         comments: commentsData,
         tabs: totalTab
       });
-      await setDoc(doc(db, 'documents', currentDocId), {
+      await updateDoc(doc(db, 'documents', currentDocId), {
         motion: motion.innerText || 'Untitled',
         timestamp: new Date(),
         author: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).displayName : 'anonymous',
@@ -758,11 +765,32 @@ function scheduleAutosave() {
         motionType: currentMotionType
       });
     }
+    else if (editorPermission == false) {
+      const commentsData = getCommentsData();
+      await updateDoc(doc(db, currentMotionType, currentDocId), {
+        comments: commentsData,
+      });
+    }
 
     showStatus('Auto-saved & synced');
   }, 1000);
 }
+const registerUniqueView = () => {
+    const pageId = window.location.pathname; // Unique identifier for the current page
+    const visitedPages = JSON.parse(localStorage.getItem('visitedPages')) || [];
 
+    // Check if the user has already viewed this specific page
+    if (!visitedPages.includes(pageId)) {
+        visitedPages.push(pageId);
+        localStorage.setItem('visitedPages', JSON.stringify(visitedPages));
+
+        // Call your backend or analytics API to increment the count
+        updateViewCount();
+        console.log("Unique view registered!");
+    } else {
+        console.log("Returning visitor; view not counted.");
+    }
+}
 const updateViewCount = async () => {
   if (currentDocId) {
     await updateDoc(doc(db, currentMotionType, currentDocId), {
@@ -775,8 +803,8 @@ const updateViewCount = async () => {
 };
 
 editor.addEventListener('input', scheduleAutosave);
-motion.addEventListener('input', () => { scheduleAutosave();  });
-motionTypeEl.addEventListener('input', () => { scheduleAutosave();  });
+motion.addEventListener('input', () => { scheduleAutosave(); });
+motionTypeEl.addEventListener('input', () => { scheduleAutosave(); });
 
 let unsubscribe;
 
@@ -810,9 +838,8 @@ window.onload = async () => {
 
   await checkPermissions();
 
-  if (editorPermission == false){
-    updateViewCount();
-  }
+  registerUniqueView();
+  
   if (currentDocId) {
     const docRef = doc(db, currentMotionType, currentDocId);
 
