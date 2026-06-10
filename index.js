@@ -82,6 +82,9 @@ splitBtn.addEventListener('click', () => {
   if (splitScreenCheck == false) {
     splitScreenCheck = true;
     const editor = document.createElement('div');
+    container.style.marginRight = '0';
+    const existingComments = document.querySelectorAll('.comments');
+    existingComments.forEach(el => el.remove());
     editor.classList.add('editor');
     editor.id = 'editor2';
     editor.contentEditable = true;
@@ -113,6 +116,9 @@ document.addEventListener('focusin', () => {
   else if (document.activeElement.id == 'editor2') {
     lastActive = 'editor2';
   }
+  else {
+    return
+  }
   console.log(lastActive);
 });
 
@@ -139,20 +145,21 @@ const displayTab = (data, title) => {
     tabItem.dataset.id = i;
     tabItem.addEventListener('click', () => {
       selectedTab = tabItem.dataset.id;
-      console.log(tabItem.dataset);
+
       if (splitScreenCheck == true) {
         console.log('split screen');
         if (lastActive === 'editor') {
-          console.log('editor1 selected');
+          container.style.marginRight = '0';
           editor.innerHTML = tab[selectedTab];
         }
         else {
+          container.style.marginRight = '0';
           const editor2 = document.getElementById('editor2');
-          console.log(editor2);
           editor2.innerHTML = tab[selectedTab];
         }
       }
       else {
+        renderCommentsFromData(comment);
         console.log('no split screen');
         editor.innerHTML = tab[selectedTab];
       }
@@ -217,34 +224,38 @@ function getCommentsData() {
     const y = parseInt(el.style.top) || 200;
     const width = parseInt(el.style.width) || 150;
     const height = parseInt(el.style.height) || 150;
+    const tabNum = selectedTab;
 
     commentsData.push({
       x,
       y,
       width,
       height,
-      content
+      content,
+      tabNum
     });
   });
 
   return commentsData;
 }
 
-function renderCommentsFromData(commentsData) {
+const renderCommentsFromData = (commentsData) => {
   // Clear existing comments
   const existingComments = document.querySelectorAll('.comments');
   existingComments.forEach(el => el.remove());
 
-  // Render each comment from data
-  commentsData.forEach((commentData) => {
-    const commentEl = document.createElement('div');
-    commentEl.classList.add('comments');
-    commentEl.style.left = `${commentData.x}px`;
-    commentEl.style.top = `${commentData.y}px`;
-    commentEl.style.width = `${commentData.width}px`;
-    commentEl.style.height = `${commentData.height}px`;
+  commentsData.forEach(item => {
+    if (item.tabNum == selectedTab) {
+      // Render each comment from data
+      commentsData.forEach((commentData) => {
+        const commentEl = document.createElement('div');
+        commentEl.classList.add('comments');
+        commentEl.style.left = `${commentData.x}px`;
+        commentEl.style.top = `${commentData.y}px`;
+        commentEl.style.width = `${commentData.width}px`;
+        commentEl.style.height = `${commentData.height}px`;
 
-    commentEl.innerHTML = `
+        commentEl.innerHTML = `
     <div class="comment-control-panel">
       <div class="comment-control">###</div>
       <button class="comment-delete-btn" title="Delete comment">×</button>
@@ -255,18 +266,23 @@ function renderCommentsFromData(commentsData) {
     <div class="comment-resize-handle" title="Drag to resize"></div>
      `;
 
-    document.body.appendChild(commentEl);
-    makeCommentDraggable(commentEl);
-    makeCommentResizable(commentEl);
+        document.body.appendChild(commentEl);
+        makeCommentDraggable(commentEl);
+        makeCommentResizable(commentEl);
 
-    const contentEl = commentEl.querySelector('.comment-content');
-    contentEl.addEventListener('input', () => updateCommentsInFirebase(getCommentsData()));
+        const contentEl = commentEl.querySelector('.comment-content');
+        contentEl.addEventListener('input', () => updateCommentsInFirebase(getCommentsData()));
 
-    const deleteBtn = commentEl.querySelector('.comment-delete-btn');
-    deleteBtn.addEventListener('click', () => {
-      commentEl.remove();
-      updateCommentsInFirebase(getCommentsData());
-    });
+        const deleteBtn = commentEl.querySelector('.comment-delete-btn');
+        deleteBtn.addEventListener('click', () => {
+          commentEl.remove();
+          updateCommentsInFirebase(getCommentsData());
+        });
+      });
+    }
+    else {
+      return
+    }
   });
 }
 
@@ -621,7 +637,7 @@ const checkPermissions = async () => {
     editorPermission = false;
     editor.setAttribute('contenteditable', 'false');
     const toolBar = document.querySelector('.toolbar');
-toolbar.querySelectorAll('button:not(.add-comment-btn)').forEach(btn => btn.style.display = 'none');
+    toolbar.querySelectorAll('button:not(.add-comment-btn)').forEach(btn => btn.style.display = 'none');
     const motion = document.querySelector('#motion');
     motion.style.width = '100%';
     motion.style.maxWidth = 'fit-content';
@@ -634,7 +650,7 @@ toolbar.querySelectorAll('button:not(.add-comment-btn)').forEach(btn => btn.styl
     editorPermission = false;
     editor.setAttribute('contenteditable', 'false');
     const toolBar = document.querySelector('.toolbar');
-toolbar.querySelectorAll('button:not(.add-comment-btn)').forEach(btn => btn.style.display = 'none');
+    toolbar.querySelectorAll('button:not(.add-comment-btn)').forEach(btn => btn.style.display = 'none');
     const motion = document.querySelector('#motion');
     motion.style.width = '100%';
     motion.style.maxWidth = 'fit-content';
@@ -649,7 +665,7 @@ toolbar.querySelectorAll('button:not(.add-comment-btn)').forEach(btn => btn.styl
     editorPermission = false;
     editor.setAttribute('contenteditable', 'false');
     const toolbar = document.querySelector('.toolbar');
-toolbar.querySelectorAll('button:not(.add-comment-btn)').forEach(btn => btn.style.display = 'none');
+    toolbar.querySelectorAll('button:not(.add-comment-btn)').forEach(btn => btn.style.display = 'none');
     const motion = document.querySelector('#motion');
     motion.style.width = '100%';
     motion.style.maxWidth = 'fit-content';
@@ -776,20 +792,20 @@ function scheduleAutosave() {
   }, 1000);
 }
 const registerUniqueView = () => {
-    const pageId = window.location.pathname; // Unique identifier for the current page
-    const visitedPages = JSON.parse(localStorage.getItem('visitedPages')) || [];
+  const pageId = window.location.pathname; // Unique identifier for the current page
+  const visitedPages = JSON.parse(localStorage.getItem('visitedPages')) || [];
 
-    // Check if the user has already viewed this specific page
-    if (!visitedPages.includes(pageId)) {
-        visitedPages.push(pageId);
-        localStorage.setItem('visitedPages', JSON.stringify(visitedPages));
+  // Check if the user has already viewed this specific page
+  if (!visitedPages.includes(pageId)) {
+    visitedPages.push(pageId);
+    localStorage.setItem('visitedPages', JSON.stringify(visitedPages));
 
-        // Call your backend or analytics API to increment the count
-        updateViewCount();
-        console.log("Unique view registered!");
-    } else {
-        console.log("Returning visitor; view not counted.");
-    }
+    // Call your backend or analytics API to increment the count
+    updateViewCount();
+    console.log("Unique view registered!");
+  } else {
+    console.log("Returning visitor; view not counted.");
+  }
 }
 const updateViewCount = async () => {
   if (currentDocId) {
@@ -839,7 +855,7 @@ window.onload = async () => {
   await checkPermissions();
 
   registerUniqueView();
-  
+
   if (currentDocId) {
     const docRef = doc(db, currentMotionType, currentDocId);
 

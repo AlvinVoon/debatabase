@@ -209,7 +209,7 @@ i {
 }
 
 .tab-item{
-  width:80%;
+  width:90%;
   height:50px;
   border-radius:10px;
   background-color:white;
@@ -217,6 +217,7 @@ i {
   display:flex;
   justify-content: center;
   align-items: center;
+  overflow-x:auto;
 }
 
  @media screen and (max-width:768px) {
